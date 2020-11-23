@@ -1,0 +1,19 @@
+{
+  "name": "abrb",
+  "version": "1.0.0",
+  "description": "npx ganache-cli -m annual immense okay want split empty total tag view media debris barely",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.2.0",
+    "bignumber.js": "^9.0.1",
+    "web3": "^1.3.0"
+  }
+}
