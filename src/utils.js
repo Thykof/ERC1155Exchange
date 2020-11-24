@@ -50,6 +50,15 @@ function weiToEther(weiAmount) {
         .toString(10);
 }
 
+function send(tx, from) {
+    return tx.estimateGas().then(gasAmount => {
+        return tx.send({
+            from,
+            gas: gasAmount
+        })
+    })
+}
+
 module.exports = {
     etherToWei,
     weiToEther,
@@ -57,4 +66,5 @@ module.exports = {
     createQueryString,
     waitForTxSuccess,
     createProvider,
+    send
 };

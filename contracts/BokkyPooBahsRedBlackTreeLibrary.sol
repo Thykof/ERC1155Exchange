@@ -1,5 +1,6 @@
 pragma solidity ^0.6.0;
 
+
 // ----------------------------------------------------------------------------
 // BokkyPooBah's Red-Black Tree Library v1.0-pre-release-a
 //
@@ -36,6 +37,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             }
         }
     }
+
     function last(Tree storage self) internal view returns (uint _key) {
         _key = self.root;
         if (_key != EMPTY) {
@@ -44,8 +46,9 @@ library BokkyPooBahsRedBlackTreeLibrary {
             }
         }
     }
+
     function next(Tree storage self, uint target) internal view returns (uint cursor) {
-        require(target != EMPTY);
+        require(target != EMPTY, "BokkyPooBahsRedBlackTreeLibrary: next: target is empty");
         if (self.nodes[target].right != EMPTY) {
             cursor = treeMinimum(self, self.nodes[target].right);
         } else {
@@ -56,8 +59,9 @@ library BokkyPooBahsRedBlackTreeLibrary {
             }
         }
     }
+
     function prev(Tree storage self, uint target) internal view returns (uint cursor) {
-        require(target != EMPTY);
+        require(target != EMPTY, "BokkyPooBahsRedBlackTreeLibrary: prev: target is empty");
         if (self.nodes[target].left != EMPTY) {
             cursor = treeMaximum(self, self.nodes[target].left);
         } else {
@@ -68,23 +72,33 @@ library BokkyPooBahsRedBlackTreeLibrary {
             }
         }
     }
+
     function exists(Tree storage self, uint key) internal view returns (bool) {
         return (key != EMPTY) && ((key == self.root) || (self.nodes[key].parent != EMPTY));
     }
+
     function isEmpty(uint key) internal pure returns (bool) {
         return key == EMPTY;
     }
+
     function getEmpty() internal pure returns (uint) {
         return EMPTY;
     }
-    function getNode(Tree storage self, uint key) internal view returns (uint _returnKey, uint _parent, uint _left, uint _right, bool _red) {
-        require(exists(self, key));
+
+    function getNode(Tree storage self, uint key) internal view returns (
+        uint _returnKey,
+        uint _parent,
+        uint _left,
+        uint _right,
+        bool _red
+    ) {
+        require(exists(self, key), "BokkyPooBahsRedBlackTreeLibrary: getNode: not exists");
         return(key, self.nodes[key].parent, self.nodes[key].left, self.nodes[key].right, self.nodes[key].red);
     }
 
     function insert(Tree storage self, uint key) internal {
-        require(key != EMPTY);
-        require(!exists(self, key));
+        require(key != EMPTY, "BokkyPooBahsRedBlackTreeLibrary: insert: target is empty");
+        require(!exists(self, key), "BokkyPooBahsRedBlackTreeLibrary: insert: exists");
         uint cursor = EMPTY;
         uint probe = self.root;
         while (probe != EMPTY) {
@@ -105,9 +119,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
         insertFixup(self, key);
     }
+
     function remove(Tree storage self, uint key) internal {
-        require(key != EMPTY);
-        require(exists(self, key));
+        require(key != EMPTY, "BokkyPooBahsRedBlackTreeLibrary: remove: target is empty");
+        require(exists(self, key), "BokkyPooBahsRedBlackTreeLibrary: remove: not exists");
         uint probe;
         uint cursor;
         if (self.nodes[key].left == EMPTY || self.nodes[key].right == EMPTY) {
@@ -156,6 +171,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
         return key;
     }
+
     function treeMaximum(Tree storage self, uint key) private view returns (uint) {
         while (self.nodes[key].right != EMPTY) {
             key = self.nodes[key].right;
@@ -182,6 +198,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         self.nodes[cursor].left = key;
         self.nodes[key].parent = cursor;
     }
+
     function rotateRight(Tree storage self, uint key) private {
         uint cursor = self.nodes[key].left;
         uint keyParent = self.nodes[key].parent;
@@ -215,8 +232,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
                     key = self.nodes[keyParent].parent;
                 } else {
                     if (key == self.nodes[keyParent].right) {
-                      key = keyParent;
-                      rotateLeft(self, key);
+                        key = keyParent;
+                        rotateLeft(self, key);
                     }
                     keyParent = self.nodes[key].parent;
                     self.nodes[keyParent].red = false;
@@ -232,8 +249,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
                     key = self.nodes[keyParent].parent;
                 } else {
                     if (key == self.nodes[keyParent].left) {
-                      key = keyParent;
-                      rotateRight(self, key);
+                        key = keyParent;
+                        rotateRight(self, key);
                     }
                     keyParent = self.nodes[key].parent;
                     self.nodes[keyParent].red = false;
@@ -258,6 +275,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
             }
         }
     }
+
     function removeFixup(Tree storage self, uint key) private {
         uint cursor;
         while (key != self.root && !self.nodes[key].red) {
