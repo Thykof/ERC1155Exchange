@@ -2,6 +2,7 @@ pragma solidity 0.6.0;
 
 import "./OrderStruct.sol";
 import "./QueueLibrary.sol";
+
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 
@@ -9,27 +10,31 @@ library OrderListLibrary {
     using QueueLibrary for QueueLibrary.Queue;
     using Counters for Counters.Counter;
 
+    event LogOrder(uint256 timestamp, uint256 price, uint256 amount, address makerAccount);
+    event Log(uint256 value);
+
     struct OrderList {
         QueueLibrary.Queue queue;
-        mapping (uint256 => OrderStruct.Order) keyToOrder;
         Counters.Counter counter;
+        mapping (uint256 => OrderStruct.Order) keyToOrder;
     }
 
     function push(
         OrderList storage self,
-        OrderStruct.Order memory order
+        uint256 price,
+        uint256 amount,
+        address makerAccount
     )
         internal
     {
         self.counter.increment();
-
-        require(
-            self.keyToOrder[self.counter.current()].price == 0,
-            "OrderListLibrary.push"
-        );
-
-        self.queue.enqueue(self.counter.current());
-        self.keyToOrder[self.counter.current()] = order;
+        uint256 key = self.counter.current();
+        self.queue.enqueue(key);
+        self.keyToOrder[key].timestamp = block.timestamp;
+        self.keyToOrder[key].price = price;
+        self.keyToOrder[key].amount = amount;
+        self.keyToOrder[key].makerAccount = makerAccount;
+        emit LogOrder(key, price, amount, makerAccount);
     }
 
     function pop(OrderList storage self)
@@ -41,5 +46,23 @@ library OrderListLibrary {
         price = self.keyToOrder[key].price;
         amount = self.keyToOrder[key].amount;
         makerAccount = self.keyToOrder[key].makerAccount;
+    }
+
+    function first(OrderList storage self)
+        internal
+        // view
+        returns (
+            uint256 timestamp,
+            uint256 price,
+            uint256 amount,
+            address makerAccount
+        )
+    {
+        timestamp = self.queue.readHead();
+        price = self.keyToOrder[timestamp].price;
+        amount = self.keyToOrder[timestamp].amount;
+        makerAccount = self.keyToOrder[timestamp].makerAccount;
+        emit LogOrder(timestamp, price, amount, makerAccount);
+        emit Log(self.queue.first);
     }
 }

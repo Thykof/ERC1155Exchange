@@ -7,6 +7,8 @@ const Web3 = require('web3');
 const API_QUOTE_URL = 'https://api.0x.org/swap/v1/quote';
 const { MNEMONIC, RPC_URL } = process.env;
 
+const GAS_LIMIT = new BigNumber(6721975);
+
 function createQueryString(params) {
     return Object.entries(params).map(([k, v]) => `${k}=${v}`).join('&');
 }
@@ -51,11 +53,18 @@ function weiToEther(weiAmount) {
 }
 
 function send(tx, from) {
-    return tx.estimateGas().then(gasAmount => {
-        return tx.send({
-            from,
-            gas: gasAmount
-        })
+    return tx.estimateGas({
+        from
+    }).then(gasAmount => {
+        // gasAmount = gasAmount * new BigNumber(1.1) <= GAS_LIMIT
+        //     ? gasAmount * new BigNumber(1.1)
+        //     : GAS_LIMIT;
+        // gasAmount = new BigNumber(gasAmount);
+        // gasAmount = gasAmount.integerValue().toNumber();
+        console.log(gasAmount);
+        // gas = gas < 100000 ? 100000 : gas
+        let result = tx.send({ from, gas: gasAmount })
+        return result;
     })
 }
 
