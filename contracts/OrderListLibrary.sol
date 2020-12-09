@@ -10,9 +10,6 @@ library OrderListLibrary {
     using QueueLibrary for QueueLibrary.Queue;
     using Counters for Counters.Counter;
 
-    event LogOrder(uint256 timestamp, uint256 price, uint256 amount, address makerAccount);
-    event Log(uint256 value);
-
     struct OrderList {
         QueueLibrary.Queue queue;
         Counters.Counter counter;
@@ -34,23 +31,10 @@ library OrderListLibrary {
         self.keyToOrder[key].price = price;
         self.keyToOrder[key].amount = amount;
         self.keyToOrder[key].makerAccount = makerAccount;
-        emit LogOrder(key, price, amount, makerAccount);
     }
 
     function pop(OrderList storage self)
         internal
-        returns (uint256 price, uint256 amount, address makerAccount)
-    {
-        uint256 key = self.queue.dequeue();
-
-        price = self.keyToOrder[key].price;
-        amount = self.keyToOrder[key].amount;
-        makerAccount = self.keyToOrder[key].makerAccount;
-    }
-
-    function first(OrderList storage self)
-        internal
-        // view
         returns (
             uint256 timestamp,
             uint256 price,
@@ -58,11 +42,28 @@ library OrderListLibrary {
             address makerAccount
         )
     {
-        timestamp = self.queue.readHead();
-        price = self.keyToOrder[timestamp].price;
-        amount = self.keyToOrder[timestamp].amount;
-        makerAccount = self.keyToOrder[timestamp].makerAccount;
-        emit LogOrder(timestamp, price, amount, makerAccount);
-        emit Log(self.queue.first);
+        uint256 key = self.queue.dequeue();
+
+        timestamp = self.keyToOrder[key].timestamp;
+        price = self.keyToOrder[key].price;
+        amount = self.keyToOrder[key].amount;
+        makerAccount = self.keyToOrder[key].makerAccount;
+    }
+
+    function first(OrderList storage self)
+        internal
+        view
+        returns (
+            uint256 timestamp,
+            uint256 price,
+            uint256 amount,
+            address makerAccount
+        )
+    {
+        uint256 key = self.queue.readHead();
+        timestamp = self.keyToOrder[key].timestamp;
+        price = self.keyToOrder[key].price;
+        amount = self.keyToOrder[key].amount;
+        makerAccount = self.keyToOrder[key].makerAccount;
     }
 }

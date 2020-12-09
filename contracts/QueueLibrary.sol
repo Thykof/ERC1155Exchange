@@ -18,16 +18,14 @@ library QueueLibrary {
 
     function readHead(Queue storage self)
         internal
-        // view
+        view
         returns (uint256)
     {
-        emit Log(self.queue[self.first]);
         return self.queue[self.first];
     }
 
     function enqueue(Queue storage self, uint256 key) internal {
-        self.last.add(1);
-        emit Log(self.last);
+        self.last = self.last.add(1);
         self.queue[self.last] = key;
     }
 
@@ -37,7 +35,7 @@ library QueueLibrary {
         uint256 key = self.queue[self.first];
 
         delete self.queue[self.first];
-        self.first.add(1);
+        self.first = self.first.add(1);
 
         return key;
     }

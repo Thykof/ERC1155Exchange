@@ -9,8 +9,6 @@ library OrderBookLibrary {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
     using OrderListLibrary for OrderListLibrary.OrderList;
 
-    event LogOrder(uint256 timestamp, uint256 price, uint256 amount, address makerAccount);
-
     struct OrderBook {
         BokkyPooBahsRedBlackTreeLibrary.Tree prices;
         mapping (uint256 => OrderListLibrary.OrderList) pricesToOrderList;
@@ -39,7 +37,7 @@ library OrderBookLibrary {
 
     function getBestOrder(OrderBook storage self)
         internal
-        // view
+        view
         returns (
             uint256 timestamp,
             uint256 price,
@@ -49,7 +47,6 @@ library OrderBookLibrary {
     {
         uint256 bestPrice = self.prices.first();
         (timestamp, price, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
-        emit LogOrder(timestamp, price, amount, makerAccount);
     }
 
     // function getOrder(OrderBook storage self, uint256 index)

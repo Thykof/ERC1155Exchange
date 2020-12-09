@@ -1,7 +1,7 @@
 const Web3 = require('web3');
 const truffleContract = require("@truffle/contract");
 
-const { send } = require('./utils');
+const { sendWithEstimateGas } = require('./utils');
 
 const uri = "http://localhost:8545";
 const web3 = new Web3(uri);
@@ -25,16 +25,18 @@ async function test() {
 
     // let tx = await send(instance.methods.newOrder(110, 5, ADR2), ADR1);
     // console.log(tx.events);
-    for (let i = 0; i < 50; i++) {
-        let r = await send(instance.methods.newOrder(115, 10+i, ADR2), ADR1);
+    for (let i = 0; i < 5; i++) {
+        let r = await sendWithEstimateGas(instance.methods.newOrder(115, 10+i, ADR2), ADR1);
+        console.log(`${r.gasUsed}`);
+    }
+    for (let i = 0; i < 5; i++) {
+        let r = await sendWithEstimateGas(instance.methods.newOrder(150+i, 10, ADR2), ADR1);
         console.log(`${r.gasUsed}`);
     }
 
-    // let r = await instance.methods.getBestOrder().call();
+    let r = await instance.methods.getBestOrder().call();
     // let r = await instance.methods.getBestOrder().send({ from: ADR1 });
-    // console.log(r.events.LogOrder);
-    // console.log(r.events.Log);
-    // console.log(r);
+    console.log(r);
 }
 
 test()

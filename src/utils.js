@@ -52,17 +52,10 @@ function weiToEther(weiAmount) {
         .toString(10);
 }
 
-function send(tx, from) {
+function sendWithEstimateGas(tx, from) {
     return tx.estimateGas({
         from
     }).then(gasAmount => {
-        // gasAmount = gasAmount * new BigNumber(1.1) <= GAS_LIMIT
-        //     ? gasAmount * new BigNumber(1.1)
-        //     : GAS_LIMIT;
-        // gasAmount = new BigNumber(gasAmount);
-        // gasAmount = gasAmount.integerValue().toNumber();
-        console.log(gasAmount);
-        // gas = gas < 100000 ? 100000 : gas
         let result = tx.send({ from, gas: gasAmount })
         return result;
     })
@@ -75,5 +68,5 @@ module.exports = {
     createQueryString,
     waitForTxSuccess,
     createProvider,
-    send
+    sendWithEstimateGas
 };
