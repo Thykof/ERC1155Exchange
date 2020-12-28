@@ -19,18 +19,13 @@ contract TestOrderListLibrary {
     }
 
     function testPush() public {
-        orderList.push(110, 10, tx.origin);
+        orderList.push(10, tx.origin);
         uint256 key = 1;
 
         Assert.equal(
             orderList.keyToOrder[key].timestamp,
             block.timestamp,
             "timestamp should be block.timestamp"
-        );
-        Assert.equal(
-            orderList.keyToOrder[key].price,
-            110,
-            "price should be 110"
         );
         Assert.equal(
             orderList.keyToOrder[key].amount,
@@ -51,7 +46,6 @@ contract TestOrderListLibrary {
 
     function testFirst() public {
         (uint256 timestamp,
-        uint256 price,
         uint256 amount,
         address makerAccount) = orderList.first();
 
@@ -59,11 +53,6 @@ contract TestOrderListLibrary {
             timestamp,
             0,
             "timestamp should not be 0"
-        );
-        Assert.equal(
-            price,
-            110,
-            "price should be 110"
         );
         Assert.equal(
             amount,
@@ -79,18 +68,13 @@ contract TestOrderListLibrary {
 
     function testPop() public {
         (uint256 timestamp,
-        uint256 price,
         uint256 amount,
         address makerAccount) = orderList.pop();
+
         Assert.notEqual(
             timestamp,
             0,
             "timestamp should not be 0"
-        );
-        Assert.equal(
-            price,
-            110,
-            "price should be 110"
         );
         Assert.equal(
             amount,
@@ -111,7 +95,7 @@ contract TestOrderListLibrary {
             "should be false"
         );
 
-        orderList.push(600, 5, tx.origin);
+        orderList.push(5, tx.origin);
 
         Assert.equal(
             orderList.exists(0),
@@ -119,7 +103,7 @@ contract TestOrderListLibrary {
             "0 exists"
         );
 
-        orderList.push(600, 6, tx.origin);
+        orderList.push(6, tx.origin);
 
         Assert.equal(
             orderList.exists(1),
@@ -130,18 +114,13 @@ contract TestOrderListLibrary {
 
     function testGet() public {
         (uint256 timestamp,
-        uint256 price,
         uint256 amount,
         address makerAccount) = orderList.get(0);
+
         Assert.notEqual(
             timestamp,
             0,
             "timestamp should not be 0"
-        );
-        Assert.equal(
-            price,
-            600,
-            "price should be 600"
         );
         Assert.equal(
             amount,
@@ -154,20 +133,15 @@ contract TestOrderListLibrary {
             "makerAccount should be tx.origin"
         );
 
-        orderList.push(750, 12, tx.origin);
+        orderList.push(12, tx.origin);
         (timestamp,
-        price,
         amount,
         makerAccount) = orderList.get(2);
+
         Assert.notEqual(
             timestamp,
             0,
             "timestamp should not be 0"
-        );
-        Assert.equal(
-            price,
-            750,
-            "price should be 750"
         );
         Assert.equal(
             amount,

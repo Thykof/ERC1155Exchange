@@ -34,7 +34,6 @@ library OrderBookLibrary {
         }
 
         self.pricesToOrderList[price].push(
-            price,
             amount,
             makerAccount
         );
@@ -45,17 +44,17 @@ library OrderBookLibrary {
         view
         returns (
             uint256 timestamp,
-            uint256 price,
+            uint256 bestPrice,
             uint256 amount,
             address makerAccount
         )
     {
         if (self.buySide) {
-            uint256 bestPrice = self.prices.last();
-            (timestamp, price, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
+            bestPrice = self.prices.last();
+            (timestamp, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
         } else {
-            uint256 bestPrice = self.prices.first();
-            (timestamp, price, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
+            bestPrice = self.prices.first();
+            (timestamp, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
         }
     }
 
@@ -64,7 +63,7 @@ library OrderBookLibrary {
         view
         returns (
             uint256 timestamp,
-            uint256 price,
+            uint256 currentPrice,
             uint256 amount,
             address makerAccount
         )
@@ -72,7 +71,6 @@ library OrderBookLibrary {
         // Returns the information of the order at position `index` in the order book
         // `getBestOrder` is a shortcut for `getOrder(0)`
         uint256 globalIndex = 0; // compared to given `index`
-        uint256 currentPrice;
         if (self.buySide) {
             currentPrice = self.prices.last();
         } else {
@@ -87,14 +85,13 @@ library OrderBookLibrary {
                     // get order
                     (
                         timestamp,
-                        price,
                         amount,
                         makerAccount
                     ) = self.pricesToOrderList[currentPrice]
                         .get(currentOrderIndex);
                     return (
                         timestamp,
-                        price,
+                        currentPrice,
                         amount,
                         makerAccount
                     );

@@ -2,7 +2,6 @@ pragma solidity 0.6.0;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "./OrderStruct.sol";
 import "./QueueLibrary.sol";
 
 
@@ -10,14 +9,19 @@ library OrderListLibrary {
     using QueueLibrary for QueueLibrary.Queue;
     using SafeMath for uint256;
 
+    struct Order {
+        uint256 timestamp;
+        uint256 amount;
+        address makerAccount;
+    }
+
     struct OrderList {
         QueueLibrary.Queue queue;
-        mapping (uint256 => OrderStruct.Order) keyToOrder;
+        mapping (uint256 => Order) keyToOrder;
     }
 
     function push(
         OrderList storage self,
-        uint256 price,
         uint256 amount,
         address makerAccount
     )
@@ -25,7 +29,6 @@ library OrderListLibrary {
     {
         uint256 key = self.queue.enqueue();
         self.keyToOrder[key].timestamp = block.timestamp;
-        self.keyToOrder[key].price = price;
         self.keyToOrder[key].amount = amount;
         self.keyToOrder[key].makerAccount = makerAccount;
     }
@@ -34,7 +37,6 @@ library OrderListLibrary {
         internal
         returns (
             uint256 timestamp,
-            uint256 price,
             uint256 amount,
             address makerAccount
         )
@@ -42,7 +44,6 @@ library OrderListLibrary {
         uint256 key = self.queue.dequeue();
 
         timestamp = self.keyToOrder[key].timestamp;
-        price = self.keyToOrder[key].price;
         amount = self.keyToOrder[key].amount;
         makerAccount = self.keyToOrder[key].makerAccount;
 
@@ -54,7 +55,6 @@ library OrderListLibrary {
         view
         returns (
             uint256 timestamp,
-            uint256 price,
             uint256 amount,
             address makerAccount
         )
@@ -62,7 +62,6 @@ library OrderListLibrary {
         uint256 key = self.queue.first;
 
         timestamp = self.keyToOrder[key].timestamp;
-        price = self.keyToOrder[key].price;
         amount = self.keyToOrder[key].amount;
         makerAccount = self.keyToOrder[key].makerAccount;
     }
@@ -72,7 +71,6 @@ library OrderListLibrary {
         view
         returns (
             uint256 timestamp,
-            uint256 price,
             uint256 amount,
             address makerAccount
         )
@@ -80,7 +78,6 @@ library OrderListLibrary {
         uint256 key = index.add(self.queue.first);
 
         timestamp = self.keyToOrder[key].timestamp;
-        price = self.keyToOrder[key].price;
         amount = self.keyToOrder[key].amount;
         makerAccount = self.keyToOrder[key].makerAccount;
     }

@@ -45,11 +45,6 @@ contract TestOrderBookLibrary {
             "timestamp should be block.timestamp"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].keyToOrder[1].price,
-            520,
-            "price should be 520"
-        );
-        Assert.equal(
             orderbook.pricesToOrderList[520].keyToOrder[1].amount,
             5,
             "amount should be 5"
@@ -87,11 +82,6 @@ contract TestOrderBookLibrary {
             "timestamp should be block.timestamp"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].keyToOrder[2].price,
-            520,
-            "price should be 520"
-        );
-        Assert.equal(
             orderbook.pricesToOrderList[520].keyToOrder[2].amount,
             10,
             "amount should be 10"
@@ -127,11 +117,6 @@ contract TestOrderBookLibrary {
             orderbook.pricesToOrderList[600].keyToOrder[1].timestamp,
             block.timestamp,
             "timestamp should be block.timestamp"
-        );
-        Assert.equal(
-            orderbook.pricesToOrderList[600].keyToOrder[1].price,
-            600,
-            "price should be 600"
         );
         Assert.equal(
             orderbook.pricesToOrderList[600].keyToOrder[1].amount,
