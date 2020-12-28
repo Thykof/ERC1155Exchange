@@ -105,7 +105,6 @@ library OrderBookLibrary {
             }
             // end of order list loop
             currentOrderIndex = 0;
-            /* globalIndex = globalIndex.add(1); */
 
             // loop over prices
             if (self.buySide) {
