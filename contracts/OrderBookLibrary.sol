@@ -4,7 +4,6 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./BokkyPooBahsRedBlackTreeLibrary.sol";
 import "./OrderListLibrary.sol";
-import "./OrderStruct.sol";
 import "./QueueLibrary.sol";
 
 
