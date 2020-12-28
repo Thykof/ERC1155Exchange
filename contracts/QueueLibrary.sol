@@ -8,35 +8,25 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 library QueueLibrary {
     using SafeMath for uint256;
 
-    event Log(uint256 value);
-
     struct Queue {
-        mapping(uint256 => uint256) queue;
         uint256 first; // to be initialized to 1
         uint256 last;
     }
 
-    function readHead(Queue storage self)
-        internal
-        view
-        returns (uint256)
-    {
-        return self.queue[self.first];
-    }
-
-    function enqueue(Queue storage self, uint256 key) internal {
+    function enqueue(Queue storage self) internal returns (uint256) {
         self.last = self.last.add(1);
-        self.queue[self.last] = key;
+        return self.last;
     }
 
-    function dequeue(Queue storage self) internal returns (uint256) {
-        require(self.last >= self.first, "QueueLibrary: non-empty queue");
+    function dequeue(Queue storage self) internal returns (uint256 key) {
+        require(self.last >= self.first, "QueueLibrary: empty queue");
 
-        uint256 key = self.queue[self.first];
+        key = self.first;
 
-        delete self.queue[self.first];
         self.first = self.first.add(1);
+    }
 
-        return key;
+    function exists(Queue storage self,uint256 index) internal view returns (bool) {
+        return self.first <= index && index <= self.last;
     }
 }

@@ -1,18 +1,17 @@
 pragma solidity 0.6.0;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
 import "./OrderStruct.sol";
 import "./QueueLibrary.sol";
-
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 
 library OrderListLibrary {
     using QueueLibrary for QueueLibrary.Queue;
-    using Counters for Counters.Counter;
+    using SafeMath for uint256;
 
     struct OrderList {
         QueueLibrary.Queue queue;
-        Counters.Counter counter;
         mapping (uint256 => OrderStruct.Order) keyToOrder;
     }
 
@@ -24,9 +23,7 @@ library OrderListLibrary {
     )
         internal
     {
-        self.counter.increment();
-        uint256 key = self.counter.current();
-        self.queue.enqueue(key);
+        uint256 key = self.queue.enqueue();
         self.keyToOrder[key].timestamp = block.timestamp;
         self.keyToOrder[key].price = price;
         self.keyToOrder[key].amount = amount;
@@ -48,6 +45,8 @@ library OrderListLibrary {
         price = self.keyToOrder[key].price;
         amount = self.keyToOrder[key].amount;
         makerAccount = self.keyToOrder[key].makerAccount;
+
+        delete self.keyToOrder[key];
     }
 
     function first(OrderList storage self)
@@ -60,10 +59,37 @@ library OrderListLibrary {
             address makerAccount
         )
     {
-        uint256 key = self.queue.readHead();
+        uint256 key = self.queue.first;
+
         timestamp = self.keyToOrder[key].timestamp;
         price = self.keyToOrder[key].price;
         amount = self.keyToOrder[key].amount;
         makerAccount = self.keyToOrder[key].makerAccount;
+    }
+
+    function get(OrderList storage self, uint256 index)
+        internal
+        view
+        returns (
+            uint256 timestamp,
+            uint256 price,
+            uint256 amount,
+            address makerAccount
+        )
+    {
+        uint256 key = index.add(self.queue.first);
+
+        timestamp = self.keyToOrder[key].timestamp;
+        price = self.keyToOrder[key].price;
+        amount = self.keyToOrder[key].amount;
+        makerAccount = self.keyToOrder[key].makerAccount;
+    }
+
+    function exists(OrderList storage self, uint256 index)
+        internal
+        view
+        returns (bool)
+    {
+        return self.queue.exists(index.add(self.queue.first));
     }
 }

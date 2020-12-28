@@ -1,17 +1,23 @@
 pragma solidity 0.6.0;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
 import "./BokkyPooBahsRedBlackTreeLibrary.sol";
 import "./OrderListLibrary.sol";
 import "./OrderStruct.sol";
+import "./QueueLibrary.sol";
 
 
 library OrderBookLibrary {
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
     using OrderListLibrary for OrderListLibrary.OrderList;
+    using SafeMath for uint256;
+    using QueueLibrary for QueueLibrary.Queue;
 
     struct OrderBook {
         BokkyPooBahsRedBlackTreeLibrary.Tree prices;
         mapping (uint256 => OrderListLibrary.OrderList) pricesToOrderList;
+        bool buySide;
     }
 
     function addOrder(
@@ -45,22 +51,69 @@ library OrderBookLibrary {
             address makerAccount
         )
     {
-        uint256 bestPrice = self.prices.first();
-        (timestamp, price, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
+        if (self.buySide) {
+            uint256 bestPrice = self.prices.last();
+            (timestamp, price, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
+        } else {
+            uint256 bestPrice = self.prices.first();
+            (timestamp, price, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
+        }
     }
 
-    // function getOrder(OrderBook storage self, uint256 index)
-    //     internal
-    //     view
-    //     returns (
-    //         uint256 bestPrice,
-    //         uint256 amount,
-    //         address makerAccount
-    //     )
-    // {
-    //     // Returns the information of the order at position `index` in the
-    //     // order book
-    //     // `getBestOrder` is a shortcut for `getOrder(0)`
-    //
-    // }
+    function getOrder(OrderBook storage self, uint256 index)
+        internal
+        view
+        returns (
+            uint256 timestamp,
+            uint256 price,
+            uint256 amount,
+            address makerAccount
+        )
+    {
+        // Returns the information of the order at position `index` in the order book
+        // `getBestOrder` is a shortcut for `getOrder(0)`
+        uint256 globalIndex = 0; // compared to given `index`
+        uint256 currentPrice;
+        if (self.buySide) {
+            currentPrice = self.prices.last();
+        } else {
+            currentPrice = self.prices.first();
+        }
+        uint256 currentOrderIndex = 0;
+
+        do {
+            while (self.pricesToOrderList[currentPrice].exists(currentOrderIndex)) {
+                // loop over orders
+                if (index == globalIndex) {
+                    // get order
+                    (
+                        timestamp,
+                        price,
+                        amount,
+                        makerAccount
+                    ) = self.pricesToOrderList[currentPrice]
+                        .get(currentOrderIndex);
+                    return (
+                        timestamp,
+                        price,
+                        amount,
+                        makerAccount
+                    );
+                } else {
+                    currentOrderIndex = currentOrderIndex.add(1);
+                    globalIndex = globalIndex.add(1);
+                }
+            }
+            // end of order list loop
+            currentOrderIndex = 0;
+            /* globalIndex = globalIndex.add(1); */
+
+            // loop over prices
+            if (self.buySide) {
+                currentPrice = self.prices.prev(currentPrice);
+            } else {
+                currentPrice = self.prices.next(currentPrice);
+            }
+        } while (globalIndex <= index);
+    }
 }

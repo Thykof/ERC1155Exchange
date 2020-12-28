@@ -11,6 +11,10 @@ contract Test {
 
     OrderBookLibrary.OrderBook private bids;
 
+    constructor() public {
+        bids.buySide = true;
+    }
+
     enum TokenState {
         NULL,
         CREATED,
@@ -34,7 +38,7 @@ contract Test {
 
     function getBestOrder()
         public
-        // view
+        view
         returns (uint256 timestamp,
         uint256 price,
         uint256 amount,

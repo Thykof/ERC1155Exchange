@@ -24,52 +24,71 @@ contract TestQueueLibrary {
             0,
             "Last should be 0"
         );
-    }
-
-    function testEnqueueAndReadHead() public {
-        queue.enqueue(12);
 
         Assert.equal(
-            queue.readHead(),
-            12,
-            "Head should be 12"
+            queue.exists(0) || queue.exists(1),
+            false,
+            "0 and 1 do not exists"
         );
     }
 
-    function testDequeueAndReadHead() public {
-        uint256 key = queue.dequeue();
-
-        Assert.equal(
-            queue.readHead(),
-            0,
-            "Head should be 0"
-        );
+    function testEnqueue() public {
+        uint256 key = queue.enqueue();
 
         Assert.equal(
             key,
-            12,
-            "Key should be 12"
+            1,
+            "key should be 1"
         );
 
         Assert.equal(
-            queue.queue[0],
-            0,
-            "0 should be 0"
-        );
-        Assert.equal(
-            queue.queue[1],
-            0,
-            "1 should be 0"
-        );
-        Assert.equal(
             queue.first,
-            2,
-            "First should be 2"
+            1,
+            "first should be 1"
         );
+
         Assert.equal(
             queue.last,
             1,
             "Last should be 1"
+        );
+    }
+
+    function testExists1() public {
+        Assert.equal(
+            queue.exists(1),
+            true,
+            "1 exists"
+        );
+    }
+
+    function testDequeue() public {
+        uint256 key = queue.dequeue();
+
+        Assert.equal(
+            key,
+            1,
+            "Key should be 1"
+            );
+
+        Assert.equal(
+            queue.first,
+            2,
+            "first should be 2"
+        );
+
+        Assert.equal(
+            queue.last,
+            1,
+            "Last should be 1"
+        );
+    }
+
+    function testExists2() public {
+        Assert.equal(
+            queue.exists(1) || queue.exists(2),
+            false,
+            "1 and 2 do not exists"
         );
     }
 }
