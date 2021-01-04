@@ -1,4 +1,4 @@
-pragma solidity 0.6.0;
+pragma solidity 0.6.2;
 
 // https://programtheblockchain.com/posts/2018/03/23/storage-patterns-stacks-queues-and-deques/
 
