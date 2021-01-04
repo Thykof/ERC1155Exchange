@@ -2,9 +2,11 @@
 
 	npx ganache-cli -m annual immense okay want split empty total tag view media debris barely
 
-	truffle build
+	npx nodemon --watch contracts --ext sol --exec npm run compile
 
-	truffle deploy
+	npx nodemon --exec npm run deploy
+
+	npx nodemon --watch contracts --watch test --ext sol,js --exec npm run test
 
 	node src/sripts.js
 

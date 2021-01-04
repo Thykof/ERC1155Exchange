@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "ganache-cli": "^6.12.1",
+    "nodemon": "^2.0.6",
     "truffle": "^5.1.58"
   }
 }
