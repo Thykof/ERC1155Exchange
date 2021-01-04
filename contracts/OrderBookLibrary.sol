@@ -111,4 +111,18 @@ library OrderBookLibrary {
             }
         } while (globalIndex <= index);
     }
+
+    function checkForMatchingOrder(
+        OrderBook storage self,
+        uint256 price
+    )
+        internal
+        view
+        returns (bool)
+    {
+        if (self.prices.exists(price)) {
+            return self.pricesToOrderList[price].exists(0);
+        }
+        return false;
+    }
 }

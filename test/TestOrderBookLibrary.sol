@@ -284,4 +284,18 @@ contract TestOrderBookLibrary {
             "makerAccount should be the 0 address"
         );
     }
+
+    function testCheckForMatchingOrder() public {
+        Assert.equal(
+            orderbook.checkForMatchingOrder(520),
+            true,
+            "order with price 520 exists."
+        );
+
+        Assert.equal(
+            orderbook.checkForMatchingOrder(10),
+            false,
+            "order with price 10 does not exist."
+        );
+    }
 }
