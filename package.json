@@ -24,6 +24,7 @@
   "devDependencies": {
     "ganache-cli": "^6.12.1",
     "nodemon": "^2.0.6",
+    "solidity-coverage": "^0.7.13",
     "truffle": "^5.1.58"
   }
 }
