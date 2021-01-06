@@ -19,7 +19,13 @@ contract TestOrderBookLibrary {
     function testAddOrder1() public {
         orderbook.buySide = true;
 
-        orderbook.addOrder(520, 5, tx.origin);
+        uint256 orderCounter = orderbook.addOrder(520, 5, tx.origin);
+
+        Assert.equal(
+            orderCounter,
+            1,
+            "orderCounter should be 1"
+        );
 
         Assert.equal(
             orderbook.prices.first(),
@@ -62,7 +68,13 @@ contract TestOrderBookLibrary {
     }
 
     function testAddOrder2() public {
-        orderbook.addOrder(520, 10, tx.origin);
+        uint256 orderCounter = orderbook.addOrder(520, 10, tx.origin);
+
+        Assert.equal(
+            orderCounter,
+            2,
+            "orderCounter should be 2"
+        );
 
         Assert.equal(
             orderbook.prices.first(),
@@ -99,7 +111,13 @@ contract TestOrderBookLibrary {
     }
 
     function testAddOrder3() public {
-        orderbook.addOrder(600, 5, tx.origin);
+        uint256 orderCounter = orderbook.addOrder(600, 5, tx.origin);
+
+        Assert.equal(
+            orderCounter,
+            1,
+            "orderCounter should be 1"
+        );
 
         Assert.equal(
             orderbook.prices.first(),
@@ -284,7 +302,7 @@ contract TestOrderBookLibrary {
     //         "makerAccount should be the 0 address"
     //     );
     // }
-
+    //
     function testCheckForMatchingOrder() public {
         Assert.equal(
             orderbook.checkForMatchingOrder(520),
@@ -298,4 +316,14 @@ contract TestOrderBookLibrary {
             "order with price 10 does not exist."
         );
     }
+
+    function testCloseOrder() public {
+
+    }
+
+    function testUpdateAmount() public {
+
+    }
+
+
 }

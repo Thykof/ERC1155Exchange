@@ -157,14 +157,4 @@ library OrderBookLibrary {
         }
         return false;
     }
-
-    function closeOrder(
-        OrderBook storage self,
-        uint256 price,
-        uint256 key
-    )
-        internal
-    {
-        self.pricesToOrderList[price].deleteOrder(key);
-    }
 }

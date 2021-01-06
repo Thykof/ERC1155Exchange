@@ -35,20 +35,10 @@ library OrderListLibrary {
         return key;
     }
 
-    function pop(OrderList storage self)
+    function deleteFirstOrder(OrderList storage self)
         internal
-        returns (
-            uint256 timestamp,
-            uint256 amount,
-            address makerAccount
-        )
     {
         uint256 key = self.queue.dequeue();
-
-        timestamp = self.keyToOrder[key].timestamp;
-        amount = self.keyToOrder[key].amount;
-        makerAccount = self.keyToOrder[key].makerAccount;
-
         delete self.keyToOrder[key];
     }
 
@@ -72,7 +62,7 @@ library OrderListLibrary {
         return self.queue.first;
     }
 
-    function get(OrderList storage self, uint256 index)
+    function get(OrderList storage self, uint256 key)
         internal
         view
         returns (
@@ -81,8 +71,6 @@ library OrderListLibrary {
             address makerAccount
         )
     {
-        uint256 key = index.add(self.queue.first);
-
         timestamp = self.keyToOrder[key].timestamp;
         amount = self.keyToOrder[key].amount;
         makerAccount = self.keyToOrder[key].makerAccount;
@@ -104,14 +92,5 @@ library OrderListLibrary {
         internal
     {
         self.keyToOrder[key].amount = newAmount;
-    }
-
-    function deleteOrder(
-        OrderList storage self,
-        uint256 key
-    )
-        internal
-    {
-        delete self.keyToOrder[key];
     }
 }

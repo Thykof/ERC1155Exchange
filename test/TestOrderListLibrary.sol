@@ -1,16 +1,19 @@
 pragma solidity 0.6.2;
 
 import "truffle/Assert.sol";
-import "../contracts/OrderListLibrary.sol";
-import "../contracts/QueueLibrary.sol";
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
+import "../contracts/OrderListLibrary.sol";
+import "../contracts/QueueLibrary.sol";
 
 
 contract TestOrderListLibrary {
     using OrderListLibrary for OrderListLibrary.OrderList;
     using Counters for Counters.Counter;
     using QueueLibrary for QueueLibrary.Queue;
+    using SafeMath for uint256;
 
     OrderListLibrary.OrderList private orderList;
 
@@ -66,25 +69,28 @@ contract TestOrderListLibrary {
         );
     }
 
-    function testPop() public {
+    function testDeleteFirstOrder() public {
+        uint256 orderCounter = orderList.firstKey();
+        orderList.deleteFirstOrder();
+
         (uint256 timestamp,
         uint256 amount,
-        address makerAccount) = orderList.pop();
+        address makerAccount) = orderList.get(orderCounter);
 
-        Assert.notEqual(
+        Assert.equal(
             timestamp,
             0,
-            "timestamp should not be 0"
+            "timestamp should be 0"
         );
         Assert.equal(
             amount,
-            10,
-            "amount should be 10"
+            0,
+            "amount should be 0"
         );
         Assert.equal(
             makerAccount,
-            tx.origin,
-            "makerAccount should be tx.origin"
+            address(0),
+            "makerAccount should be 0x"
         );
     }
 
@@ -113,9 +119,11 @@ contract TestOrderListLibrary {
     }
 
     function testGet() public {
+        uint256 orderCounter = orderList.firstKey();
+
         (uint256 timestamp,
         uint256 amount,
-        address makerAccount) = orderList.get(0);
+        address makerAccount) = orderList.get(orderCounter);
 
         Assert.notEqual(
             timestamp,
@@ -136,7 +144,7 @@ contract TestOrderListLibrary {
         orderList.push(12, tx.origin);
         (timestamp,
         amount,
-        makerAccount) = orderList.get(2);
+        makerAccount) = orderList.get(orderCounter.add(2));
 
         Assert.notEqual(
             timestamp,
@@ -152,6 +160,21 @@ contract TestOrderListLibrary {
             makerAccount,
             tx.origin,
             "makerAccount should be tx.origin"
+        );
+    }
+
+    function testUpdateAmount() public {
+        // Get orderCounter for order with amount 12
+        uint256 orderCounter = orderList.firstKey().add(2);
+
+        orderList.updateAmount(orderCounter, 10);
+        (uint256 timestamp,
+        uint256 amount,
+        address makerAccount) = orderList.get(orderCounter);
+        Assert.equal(
+            amount,
+            10,
+            "amount should be 10"
         );
     }
 }

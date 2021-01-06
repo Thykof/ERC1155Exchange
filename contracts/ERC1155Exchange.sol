@@ -113,12 +113,12 @@ contract ERC1155Exchange {
                 // matching (maker) order filled
                 // let's continue to fill maker orders
                 executeTrade(buySide, makerAccount, takerAccount, currentAmount);
-                orderList.deleteOrder(orderCounter);
+                orderList.deleteFirstOrder();
                 filledAmount = filledAmount.add(currentAmount);
             } else {
                 // currentAmount == requestedAmount
                 executeTrade(buySide, makerAccount, takerAccount, currentAmount);
-                orderList.deleteOrder(orderCounter);
+                orderList.deleteFirstOrder();
                 return;
             }
 
