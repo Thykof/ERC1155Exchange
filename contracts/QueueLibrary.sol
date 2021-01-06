@@ -26,7 +26,7 @@ library QueueLibrary {
         self.first = self.first.add(1);
     }
 
-    function exists(Queue storage self,uint256 index) internal view returns (bool) {
+    function exists(Queue storage self, uint256 index) internal view returns (bool) {
         return self.first <= index && index <= self.last;
     }
 }
