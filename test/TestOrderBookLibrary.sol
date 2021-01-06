@@ -165,125 +165,125 @@ contract TestOrderBookLibrary {
         );
     }
 
-    function testGetOrder1() public {
-        (
-            uint256 timestamp,
-            uint256 price,
-            uint256 amount,
-            address makerAccount
-        ) = orderbook.getOrder(0);
-
-        Assert.equal(
-            price,
-            600,
-            "price should be 600"
-        );
-        Assert.notEqual(
-            timestamp,
-            0,
-            "timestamp should not be 0"
-            );
-        Assert.equal(
-            amount,
-            5,
-            "amount should be 5"
-        );
-        Assert.equal(
-            makerAccount,
-            tx.origin,
-            "makerAccount should be tx.origin"
-        );
-    }
-
-    function testGetOrder2() public {
-        (
-            uint256 timestamp,
-            uint256 price,
-            uint256 amount,
-            address makerAccount
-        ) = orderbook.getOrder(1);
-
-        Assert.equal(
-            price,
-            520,
-            "price should be 520"
-        );
-        Assert.notEqual(
-            timestamp,
-            0,
-            "timestamp should not be 0"
-            );
-        Assert.equal(
-            amount,
-            5,
-            "amount should be 5"
-        );
-        Assert.equal(
-            makerAccount,
-            tx.origin,
-            "makerAccount should be tx.origin"
-        );
-    }
-
-    function testGetOrder3() public {
-        (
-            uint256 timestamp,
-            uint256 price,
-            uint256 amount,
-            address makerAccount
-        ) = orderbook.getOrder(2);
-
-        Assert.equal(
-            price,
-            520,
-            "price should be 520"
-        );
-        Assert.notEqual(
-            timestamp,
-            0,
-            "timestamp should not be 0"
-            );
-        Assert.equal(
-            amount,
-            10,
-            "amount should be 10"
-        );
-        Assert.equal(
-            makerAccount,
-            tx.origin,
-            "makerAccount should be tx.origin"
-        );
-    }
-
-    function testGetOrder4() public {
-        (
-            uint256 timestamp,
-            uint256 price,
-            uint256 amount,
-            address makerAccount
-        ) = orderbook.getOrder(3);
-
-        Assert.equal(
-            price,
-            0,
-            "price should be 0"
-        );
-        Assert.equal(
-            timestamp,
-            0,
-            "timestamp should be 0"
-            );
-        Assert.equal(
-            amount,
-            0,
-            "amount should be 0"
-        );
-        Assert.equal(
-            makerAccount,
-            address(0),
-            "makerAccount should be the 0 address"
-        );
-    }
+    // function testGetOrder1() public {
+    //     (
+    //         uint256 timestamp,
+    //         uint256 price,
+    //         uint256 amount,
+    //         address makerAccount
+    //     ) = orderbook.getOrder(0);
+    //
+    //     Assert.equal(
+    //         price,
+    //         600,
+    //         "price should be 600"
+    //     );
+    //     Assert.notEqual(
+    //         timestamp,
+    //         0,
+    //         "timestamp should not be 0"
+    //         );
+    //     Assert.equal(
+    //         amount,
+    //         5,
+    //         "amount should be 5"
+    //     );
+    //     Assert.equal(
+    //         makerAccount,
+    //         tx.origin,
+    //         "makerAccount should be tx.origin"
+    //     );
+    // }
+    //
+    // function testGetOrder2() public {
+    //     (
+    //         uint256 timestamp,
+    //         uint256 price,
+    //         uint256 amount,
+    //         address makerAccount
+    //     ) = orderbook.getOrder(1);
+    //
+    //     Assert.equal(
+    //         price,
+    //         520,
+    //         "price should be 520"
+    //     );
+    //     Assert.notEqual(
+    //         timestamp,
+    //         0,
+    //         "timestamp should not be 0"
+    //         );
+    //     Assert.equal(
+    //         amount,
+    //         5,
+    //         "amount should be 5"
+    //     );
+    //     Assert.equal(
+    //         makerAccount,
+    //         tx.origin,
+    //         "makerAccount should be tx.origin"
+    //     );
+    // }
+    //
+    // function testGetOrder3() public {
+    //     (
+    //         uint256 timestamp,
+    //         uint256 price,
+    //         uint256 amount,
+    //         address makerAccount
+    //     ) = orderbook.getOrder(2);
+    //
+    //     Assert.equal(
+    //         price,
+    //         520,
+    //         "price should be 520"
+    //     );
+    //     Assert.notEqual(
+    //         timestamp,
+    //         0,
+    //         "timestamp should not be 0"
+    //         );
+    //     Assert.equal(
+    //         amount,
+    //         10,
+    //         "amount should be 10"
+    //     );
+    //     Assert.equal(
+    //         makerAccount,
+    //         tx.origin,
+    //         "makerAccount should be tx.origin"
+    //     );
+    // }
+    //
+    // function testGetOrder4() public {
+    //     (
+    //         uint256 timestamp,
+    //         uint256 price,
+    //         uint256 amount,
+    //         address makerAccount
+    //     ) = orderbook.getOrder(3);
+    //
+    //     Assert.equal(
+    //         price,
+    //         0,
+    //         "price should be 0"
+    //     );
+    //     Assert.equal(
+    //         timestamp,
+    //         0,
+    //         "timestamp should be 0"
+    //         );
+    //     Assert.equal(
+    //         amount,
+    //         0,
+    //         "amount should be 0"
+    //     );
+    //     Assert.equal(
+    //         makerAccount,
+    //         address(0),
+    //         "makerAccount should be the 0 address"
+    //     );
+    // }
 
     function testCheckForMatchingOrder() public {
         Assert.equal(

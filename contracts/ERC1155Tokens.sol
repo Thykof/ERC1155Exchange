@@ -29,7 +29,6 @@ contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
     function executeTrade(
         address buyer,
         address seller,
-        uint256 price,
         uint256 amount
     )
         public
@@ -41,7 +40,5 @@ contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
         require(tokenId != 0, "ERC1155Tokens: Sender is not an exchange");
 
         safeTransferFrom(seller, buyer, tokenId, amount, new bytes(0));
-
-        // TODO: use `price`
     }
 }

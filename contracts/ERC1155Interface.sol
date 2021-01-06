@@ -5,7 +5,6 @@ interface ERC1155Interface {
     function executeTrade(
         address buyer,
         address seller,
-        uint256 price,
         uint256 amount
     ) external;
 }

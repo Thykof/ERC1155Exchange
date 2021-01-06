@@ -3,11 +3,13 @@ pragma solidity 0.6.2;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./OrderBookLibrary.sol";
+import "./OrderListLibrary.sol";
 import "./ERC1155Interface.sol";
 
 
 contract ERC1155Exchange {
     using OrderBookLibrary for OrderBookLibrary.OrderBook;
+    using OrderListLibrary for OrderListLibrary.OrderList;
     using SafeMath for uint256;
 
     OrderBookLibrary.OrderBook internal bids; // buy side
@@ -30,10 +32,14 @@ contract ERC1155Exchange {
     )
         public
     {
+        require(amount > 0, "ERC1155Exchange: amount must be over zero");
+
+        uint256 incommingOrderCounter;
+
         if (buySide) {
-            bids.addOrder(price, amount, makerAccount);
+            incommingOrderCounter = bids.addOrder(price, amount, makerAccount);
         } else {
-            asks.addOrder(price, amount, makerAccount);
+            incommingOrderCounter = asks.addOrder(price, amount, makerAccount);
         }
 
         if (limitOrder) {
@@ -41,6 +47,13 @@ contract ERC1155Exchange {
                 // there is matching order
                 // in the oposite side
                 // so let's fill the incomming order
+                fillOrderLimit(
+                    buySide,
+                    price,
+                    amount,
+                    makerAccount,
+                    incommingOrderCounter
+                );
             }
         } else {
             fillOrderMarket(buySide, amount, makerAccount);
@@ -60,6 +73,67 @@ contract ERC1155Exchange {
         }
     }
 
+    function fillOrderLimit(
+        bool buySide,
+        uint256 price,
+        uint256 requestedAmount,
+        address takerAccount,
+        uint256 incommingOrderCounter
+    )
+        internal
+    {
+        OrderListLibrary.OrderList storage orderList = asks
+            .pricesToOrderList[price];
+        if (!buySide) {
+            orderList = bids.pricesToOrderList[price];
+        }
+        uint256 orderCounter = orderList.firstKey();
+
+        uint256 filledAmount = 0; // and the end, we want this to be equal to `requestedAmount`
+
+        uint256 timestamp;
+        uint256 currentAmount;
+        address makerAccount;
+
+        while (filledAmount < requestedAmount) {
+            (
+                timestamp,
+                currentAmount,
+                makerAccount
+            ) = orderList.get(orderCounter);
+
+            if (currentAmount > requestedAmount) {
+                // incomming (taker) order filled
+                // matching (maker) order partially filled
+                executeTrade(buySide, makerAccount, takerAccount, requestedAmount);
+                orderList.updateAmount(orderCounter, currentAmount.sub(requestedAmount));
+                return;
+            } else if (currentAmount < requestedAmount) {
+                // incomming (taker) order may be partially filled
+                // matching (maker) order filled
+                // let's continue to fill maker orders
+                executeTrade(buySide, makerAccount, takerAccount, currentAmount);
+                orderList.deleteOrder(orderCounter);
+                filledAmount = filledAmount.add(currentAmount);
+            } else {
+                // currentAmount == requestedAmount
+                executeTrade(buySide, makerAccount, takerAccount, currentAmount);
+                orderList.deleteOrder(orderCounter);
+                return;
+            }
+
+            orderCounter = orderCounter.add(orderCounter);
+        }
+
+        // TODO: updateAmount of the incomming (taker) order
+        OrderBookLibrary.OrderBook storage orderBook = asks;
+        if (buySide) {
+            orderBook = bids;
+        }
+        uint256 newAmount = requestedAmount.sub(filledAmount);
+        orderBook.updateAmount(price, incommingOrderCounter, newAmount);
+    }
+
     function fillOrderMarket(
         bool buySide,
         uint256 requestedAmount,
@@ -67,9 +141,15 @@ contract ERC1155Exchange {
     )
         internal
     {
+        // method variables
         uint256 orderCounter = 0;
-        uint256 filledAmount = 0;
+        uint256 filledAmount = 0; // and the end, we want this to be equal to `requestedAmount`
+        OrderBookLibrary.OrderBook storage orderBook = asks;
+        if (!buySide) {
+            orderBook = bids;
+        }
 
+        // order variables
         uint256 timestamp;
         uint256 price;
         uint256 currentAmount;
@@ -77,40 +157,31 @@ contract ERC1155Exchange {
 
         while (filledAmount < requestedAmount) {
             // get order
-            if (buySide) {
-                (
-                    timestamp,
-                    price,
-                    currentAmount,
-                    makerAccount
-                ) = asks.getOrder(orderCounter);
-            } else {
-                (
-                    timestamp,
-                    price,
-                    currentAmount,
-                    makerAccount
-                ) = bids.getOrder(orderCounter);
-            }
+            (
+                timestamp,
+                currentAmount,
+                makerAccount
+            ) = orderBook.getOrderByPriceAndIndex(price, orderCounter);
 
             // calculate requestedAmount
             if (currentAmount > requestedAmount) {
                 // incomming (taker) order filled
                 // matching (maker) order partially filled
-                // TODO: reduce the amount of the maker order
-                executeTrade(buySide, makerAccount, takerAccount, price, currentAmount);
+                orderBook.updateAmount(price, orderCounter, currentAmount.sub(requestedAmount));
+                executeTrade(buySide, makerAccount, takerAccount, requestedAmount);
+                return;
             } else if (currentAmount < requestedAmount) {
                 // incomming (taker) order may be partially filled
                 // matching (maker) order filled
                 // let's continue to fill maker orders
                 filledAmount = filledAmount.add(currentAmount);
                 orderCounter = orderCounter.add(1);
-                executeTrade(buySide, makerAccount, takerAccount, price, currentAmount);
+                executeTrade(buySide, makerAccount, takerAccount, currentAmount);
             } else {
-                executeTrade(buySide, makerAccount, takerAccount, price, currentAmount);
+                // matching order amount is eaqul to requestedAmount
+                executeTrade(buySide, makerAccount, takerAccount, currentAmount);
+                return;
             }
-
-            // fill order
         }
     }
 
@@ -118,7 +189,6 @@ contract ERC1155Exchange {
         bool buySide,
         address makerAccount,
         address takerAccount,
-        uint256 price,
         uint256 amount
     )
         internal
@@ -137,7 +207,6 @@ contract ERC1155Exchange {
         tokenContract.executeTrade(
             buyer,
             seller,
-            price,
             amount
         );
     }

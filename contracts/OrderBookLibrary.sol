@@ -26,6 +26,7 @@ library OrderBookLibrary {
         address makerAccount
     )
         internal
+        returns (uint256)
     {
         if (!self.prices.exists(price)) {
             // create OrderList
@@ -33,7 +34,7 @@ library OrderBookLibrary {
             self.pricesToOrderList[price].queue.first = 1;
         }
 
-        self.pricesToOrderList[price].push(
+        return self.pricesToOrderList[price].push(
             amount,
             makerAccount
         );
@@ -58,58 +59,89 @@ library OrderBookLibrary {
         }
     }
 
-    function getOrder(OrderBook storage self, uint256 index)
+    // function getOrder(OrderBook storage self, uint256 index)
+    //     internal
+    //     view
+    //     returns (
+    //         uint256 timestamp,
+    //         uint256 currentPrice,
+    //         uint256 amount,
+    //         address makerAccount
+    //     )
+    // {
+    //     // Returns the information of the order at position `index` in the order book
+    //     // `getBestOrder` is a shortcut for `getOrder(0)`
+    //     uint256 globalIndex = 0; // compared to given `index`
+    //     if (self.buySide) {
+    //         currentPrice = self.prices.last();
+    //     } else {
+    //         currentPrice = self.prices.first();
+    //     }
+    //     uint256 currentOrderIndex = 0;
+    //
+    //     do {
+    //         while (self.pricesToOrderList[currentPrice].exists(currentOrderIndex)) {
+    //             // loop over orders
+    //             if (index == globalIndex) {
+    //                 // get order
+    //                 (
+    //                     timestamp,
+    //                     amount,
+    //                     makerAccount
+    //                 ) = self.pricesToOrderList[currentPrice]
+    //                     .get(currentOrderIndex);
+    //                 return (
+    //                     timestamp,
+    //                     currentPrice,
+    //                     amount,
+    //                     makerAccount
+    //                 );
+    //             } else {
+    //                 currentOrderIndex = currentOrderIndex.add(1);
+    //                 globalIndex = globalIndex.add(1);
+    //             }
+    //         }
+    //         // end of order list loop
+    //         currentOrderIndex = 0;
+    //
+    //         // loop over prices
+    //         if (self.buySide) {
+    //             currentPrice = self.prices.prev(currentPrice);
+    //         } else {
+    //             currentPrice = self.prices.next(currentPrice);
+    //         }
+    //     } while (globalIndex <= index);
+    // }
+    //
+    function getOrderByPriceAndIndex(
+        OrderBook storage self,
+        uint256 price,
+        uint256 orderKey
+    )
         internal
         view
         returns (
             uint256 timestamp,
-            uint256 currentPrice,
             uint256 amount,
             address makerAccount
         )
     {
-        // Returns the information of the order at position `index` in the order book
-        // `getBestOrder` is a shortcut for `getOrder(0)`
-        uint256 globalIndex = 0; // compared to given `index`
-        if (self.buySide) {
-            currentPrice = self.prices.last();
-        } else {
-            currentPrice = self.prices.first();
-        }
-        uint256 currentOrderIndex = 0;
+        (
+            timestamp,
+            amount,
+            makerAccount
+        ) = self.pricesToOrderList[price].get(orderKey);
+    }
 
-        do {
-            while (self.pricesToOrderList[currentPrice].exists(currentOrderIndex)) {
-                // loop over orders
-                if (index == globalIndex) {
-                    // get order
-                    (
-                        timestamp,
-                        amount,
-                        makerAccount
-                    ) = self.pricesToOrderList[currentPrice]
-                        .get(currentOrderIndex);
-                    return (
-                        timestamp,
-                        currentPrice,
-                        amount,
-                        makerAccount
-                    );
-                } else {
-                    currentOrderIndex = currentOrderIndex.add(1);
-                    globalIndex = globalIndex.add(1);
-                }
-            }
-            // end of order list loop
-            currentOrderIndex = 0;
-
-            // loop over prices
-            if (self.buySide) {
-                currentPrice = self.prices.prev(currentPrice);
-            } else {
-                currentPrice = self.prices.next(currentPrice);
-            }
-        } while (globalIndex <= index);
+    function updateAmount(
+        OrderBook storage self,
+        uint256 price,
+        uint256 orderCounter,
+        uint256 newAmount
+    )
+        internal
+    {
+        self.pricesToOrderList[price].updateAmount(orderCounter, newAmount);
     }
 
     function checkForMatchingOrder(
@@ -124,5 +156,15 @@ library OrderBookLibrary {
             return self.pricesToOrderList[price].exists(0);
         }
         return false;
+    }
+
+    function closeOrder(
+        OrderBook storage self,
+        uint256 price,
+        uint256 key
+    )
+        internal
+    {
+        self.pricesToOrderList[price].deleteOrder(key);
     }
 }
