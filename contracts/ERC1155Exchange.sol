@@ -35,6 +35,7 @@ contract ERC1155Exchange {
         require(amount > 0, "ERC1155Exchange: amount must be over zero");
 
         uint256 incommingOrderCounter;
+        address makerAccount = msg.sender;
 
         if (buySide) {
             incommingOrderCounter = bids.addOrder(price, amount, makerAccount);
@@ -43,7 +44,8 @@ contract ERC1155Exchange {
         }
 
         if (limitOrder) {
-            if (checkForMatchingOrder(buySide, price)) {
+            bool foundMatchingOrder = checkForMatchingOrder(buySide, price);
+            if (foundMatchingOrder) {
                 // there is matching order
                 // in the oposite side
                 // so let's fill the incomming order
@@ -67,7 +69,8 @@ contract ERC1155Exchange {
         returns (bool)
     {
         if (buySide) {
-            return asks.checkForMatchingOrder(price);
+            bool foundMatchingOrder = asks.checkForMatchingOrder(price);
+            return foundMatchingOrder;
         } else {
             return bids.checkForMatchingOrder(price);
         }
@@ -82,8 +85,7 @@ contract ERC1155Exchange {
     )
         internal
     {
-        OrderListLibrary.OrderList storage orderList = asks
-            .pricesToOrderList[price];
+        OrderListLibrary.OrderList storage orderList = asks.pricesToOrderList[price];
         if (!buySide) {
             orderList = bids.pricesToOrderList[price];
         }
@@ -94,6 +96,11 @@ contract ERC1155Exchange {
         uint256 timestamp;
         uint256 currentAmount;
         address makerAccount;
+
+        OrderBookLibrary.OrderBook storage makerOrderBook = asks;
+        if (!buySide) {
+            makerOrderBook = bids;
+        }
 
         while (remainingAmount > 0 && orderList.exists(orderCounter)) {
             (
@@ -106,7 +113,7 @@ contract ERC1155Exchange {
                 // incomming (taker) order filled
                 // matching (maker) order partially filled
                 executeTrade(buySide, makerAccount, takerAccount, remainingAmount);
-                orderList.updateAmount(orderCounter, currentAmount.sub(remainingAmount));
+                makerOrderBook.updateAmount(price, orderCounter, currentAmount.sub(remainingAmount));
                 remainingAmount = remainingAmount.sub(remainingAmount); // => remainingAmount = 0
             } else if (currentAmount < remainingAmount) {
                 // incomming (taker) order may be partially filled
@@ -126,18 +133,18 @@ contract ERC1155Exchange {
             orderCounter = orderCounter.add(orderCounter);
         }
 
-        OrderBookLibrary.OrderBook storage orderBook = asks;
+        OrderBookLibrary.OrderBook storage incommingOrderBook = asks;
         if (buySide) {
-            orderBook = bids;
+            incommingOrderBook = bids;
         }
 
         if (remainingAmount == 0) {
             // delete incomming order
-            orderBook.closeFirstOrderAtPrice(price);
+            incommingOrderBook.closeFirstOrderAtPrice(price);
         } else {
             // Update amount of the incomming (taker) order
             // incomming order partially filled
-            orderBook.updateAmount(price, incommingOrderCounter, remainingAmount);
+            incommingOrderBook.updateAmount(price, incommingOrderCounter, remainingAmount);
         }
     }
 

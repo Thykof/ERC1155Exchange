@@ -38,9 +38,9 @@ library OrderListLibrary {
     function deleteFirstOrder(OrderList storage self)
         internal
     {
+        // WARNING: must be called be orderBook only
         uint256 key = self.queue.dequeue();
         delete self.keyToOrder[key];
-        // WARNING: may need to delete price in tree if orderList is now empty
     }
 
     function first(OrderList storage self)

@@ -3,35 +3,28 @@ pragma solidity 0.6.2;
 import "truffle/Assert.sol";
 
 import "../contracts/ERC1155Exchange.sol";
+import "../contracts/ERC1155Tokens.sol";
 
 
-contract TestERC1155Exchange is ERC1155Exchange {
-    function testCheckForMatchingOrder() public {
-        addOrder(true, 520, 1, address(0), true);
-        addOrder(false, 700, 1, address(0), true);
+contract TestERC1155Exchange {
 
-        Assert.equal(
-            checkForMatchingOrder(false, 520),
-            true,
-            "buy order with price 520 exists."
-        );
+    ERC1155Tokens private token;
+    ERC1155Exchange private exchange;
 
-        Assert.equal(
-            checkForMatchingOrder(false, 10),
-            false,
-            "buy order with price 10 does not exist."
-        );
+    function beforeEach() public {
+        token = new ERC1155Tokens();
 
-        Assert.equal(
-            checkForMatchingOrder(true, 700),
-            true,
-            "sell order with price 700 exists."
-        );
+        exchange = token.newToken(address(1), 1, 300);
+    }
 
-        Assert.equal(
-            checkForMatchingOrder(true, 999),
-            false,
-            "sell order with price 999 does not exist."
-        );
+    function beforeEachAgain() public {
+        exchange.addOrder(true, 600, 5, address(1), true);
+        exchange.addOrder(true, 520, 5, address(2), true);
+        exchange.addOrder(true, 520, 10, address(3), true);
+        exchange.addOrder(false, 700, 7, address(4), true);
+    }
+
+    function testFillOrderLimit() public {
+        exchange.addOrder(false, 600, 5, address(5), true);
     }
 }

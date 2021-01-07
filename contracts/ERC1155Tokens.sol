@@ -10,6 +10,13 @@ import "./ERC1155Exchange.sol";
 contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
     using SafeMath for uint256;
 
+    event TokenCreated(
+        address account,
+        uint256 tokenId,
+        uint256 amount,
+        address exchangeAddress
+    );
+
     address public owner;
     mapping(address => uint256) private exchangesToTokenId;
 
@@ -17,13 +24,23 @@ contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
         owner = msg.sender;
     }
 
-    function newToken(address account, uint256 tokenId, uint256 amount) public {
+    function newToken(
+        address account,
+        uint256 tokenId,
+        uint256 amount
+    )
+        public
+        returns (ERC1155Exchange exchange)
+    {
         require(msg.sender == owner, "ERC1155Tokens: Sender is not contract owner");
+        require(tokenId != 0, "ERC1155Tokens: tokenId can't be zero");
 
         _mint(account, tokenId, amount, new bytes(0));
 
-        ERC1155Exchange exchangeAddress = new ERC1155Exchange();
-        exchangesToTokenId[address(exchangeAddress)] = tokenId;
+        exchange = new ERC1155Exchange();
+        exchangesToTokenId[address(exchange)] = tokenId;
+
+        emit TokenCreated(account, tokenId, amount, address(exchange));
     }
 
     function executeTrade(
