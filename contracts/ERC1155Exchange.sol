@@ -12,6 +12,9 @@ contract ERC1155Exchange {
     using OrderListLibrary for OrderListLibrary.OrderList;
     using SafeMath for uint256;
 
+    uint256 public tokenId;
+    mapping (address => uint) public pendingWithdrawals;
+
     OrderBookLibrary.OrderBook internal bids; // buy side
     OrderBookLibrary.OrderBook internal asks; // sell side
 
@@ -21,6 +24,14 @@ contract ERC1155Exchange {
         bids.buySide = true;
         asks.buySide = false;
         tokenContract = ERC1155Interface(msg.sender);
+
+    function withdraw() public {
+        // See https://docs.soliditylang.org/en/v0.6.2/common-patterns.html
+        uint amount = pendingWithdrawals[msg.sender];
+        // Remember to zero the pending refund before
+        // sending to prevent re-entrancy attacks
+        pendingWithdrawals[msg.sender] = 0;
+        msg.sender.transfer(amount);
     }
 
     function addOrder(
@@ -31,6 +42,7 @@ contract ERC1155Exchange {
         bool limitOrder
     )
         public
+        payable
     {
         require(amount > 0, "ERC1155Exchange: amount must be over zero");
 
@@ -112,20 +124,20 @@ contract ERC1155Exchange {
             if (currentAmount > remainingAmount) {
                 // incomming (taker) order filled
                 // matching (maker) order partially filled
-                executeTrade(buySide, makerAccount, takerAccount, remainingAmount);
+                executeTrade(price, buySide, makerAccount, takerAccount, remainingAmount);
                 makerOrderBook.updateAmount(price, orderCounter, currentAmount.sub(remainingAmount));
                 remainingAmount = remainingAmount.sub(remainingAmount); // => remainingAmount = 0
             } else if (currentAmount < remainingAmount) {
                 // incomming (taker) order may be partially filled
                 // matching (maker) order filled
                 // let's continue to fill maker orders
-                executeTrade(buySide, makerAccount, takerAccount, currentAmount);
+                executeTrade(price, buySide, makerAccount, takerAccount, currentAmount);
                 orderList.deleteFirstOrder();
                 remainingAmount = remainingAmount.sub(currentAmount);
             } else {
                 // currentAmount == remainingAmount
                 // incomming (taker) order filled and matching (maker) order filled
-                executeTrade(buySide, makerAccount, takerAccount, currentAmount);
+                executeTrade(price, buySide, makerAccount, takerAccount, currentAmount);
                 orderList.deleteFirstOrder();
                 remainingAmount = remainingAmount.sub(currentAmount);
             }
@@ -199,6 +211,7 @@ contract ERC1155Exchange {
     }
 
     function executeTrade(
+        uint256 price,
         bool buySide,
         address makerAccount,
         address takerAccount,
@@ -222,5 +235,21 @@ contract ERC1155Exchange {
             seller,
             amount
         );
+
+        // Add withdrawal for seller
+        pendingWithdrawals[seller] = pendingWithdrawals[seller].add(
+            getWeiPrice(price, amount)
+        );
+    }
+
+    function getWeiPrice(
+        uint256 price,
+        uint256 amount
+    )
+        internal
+        pure
+        returns (uint256)
+    {
+        return price * amount;
     }
 }
