@@ -37,10 +37,27 @@ contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
 
         _mint(account, tokenId, amount, new bytes(0));
 
-        exchange = new ERC1155Exchange();
+        exchange = new ERC1155Exchange(tokenId);
         exchangesToTokenId[address(exchange)] = tokenId;
 
         emit TokenCreated(account, tokenId, amount, address(exchange));
+    }
+
+    function checkApproved(
+        uint256 tokenId,
+        address account
+    )
+        public
+        override
+        returns (bool)
+    {
+        require(msg.sender != owner, "ERC1155Tokens: Sender is contract owner");
+
+        uint256 id = exchangesToTokenId[msg.sender];
+        require(id != 0, "ERC1155Tokens: Sender is not an exchange");
+        require(id == tokenId, "ERC1155Tokens: bad tokenId");
+
+        return isApprovedForAll(msg.sender, account);
     }
 
     function executeTrade(

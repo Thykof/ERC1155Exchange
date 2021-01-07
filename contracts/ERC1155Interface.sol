@@ -7,4 +7,11 @@ interface ERC1155Interface {
         address seller,
         uint256 amount
     ) external;
+
+    function checkApproved(
+        uint256 tokenId,
+        address account
+    )
+    external
+    returns (bool);
 }
