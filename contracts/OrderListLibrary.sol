@@ -40,6 +40,7 @@ library OrderListLibrary {
     {
         uint256 key = self.queue.dequeue();
         delete self.keyToOrder[key];
+        // WARNING: may need to delete price in tree if orderList is now empty
     }
 
     function first(OrderList storage self)
@@ -76,12 +77,16 @@ library OrderListLibrary {
         makerAccount = self.keyToOrder[key].makerAccount;
     }
 
-    function exists(OrderList storage self, uint256 index)
+    function isEmpty(OrderList storage self) internal view returns (bool) {
+        return !self.queue.exists(self.queue.first);
+    }
+
+    function exists(OrderList storage self, uint256 key)
         internal
         view
         returns (bool)
     {
-        return self.queue.exists(index.add(self.queue.first));
+        return self.queue.exists(key);
     }
 
     function updateAmount(

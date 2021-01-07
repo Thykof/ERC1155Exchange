@@ -89,49 +89,56 @@ contract ERC1155Exchange {
         }
         uint256 orderCounter = orderList.firstKey();
 
-        uint256 filledAmount = 0; // and the end, we want this to be equal to `requestedAmount`
+        uint256 remainingAmount = requestedAmount; // at the end, we want this to be 0
 
         uint256 timestamp;
         uint256 currentAmount;
         address makerAccount;
 
-        while (filledAmount < requestedAmount) {
+        while (remainingAmount > 0 && orderList.exists(orderCounter)) {
             (
                 timestamp,
                 currentAmount,
                 makerAccount
             ) = orderList.get(orderCounter);
 
-            if (currentAmount > requestedAmount) {
+            if (currentAmount > remainingAmount) {
                 // incomming (taker) order filled
                 // matching (maker) order partially filled
-                executeTrade(buySide, makerAccount, takerAccount, requestedAmount);
-                orderList.updateAmount(orderCounter, currentAmount.sub(requestedAmount));
-                return;
-            } else if (currentAmount < requestedAmount) {
+                executeTrade(buySide, makerAccount, takerAccount, remainingAmount);
+                orderList.updateAmount(orderCounter, currentAmount.sub(remainingAmount));
+                remainingAmount = remainingAmount.sub(remainingAmount); // => remainingAmount = 0
+            } else if (currentAmount < remainingAmount) {
                 // incomming (taker) order may be partially filled
                 // matching (maker) order filled
                 // let's continue to fill maker orders
                 executeTrade(buySide, makerAccount, takerAccount, currentAmount);
                 orderList.deleteFirstOrder();
-                filledAmount = filledAmount.add(currentAmount);
+                remainingAmount = remainingAmount.sub(currentAmount);
             } else {
-                // currentAmount == requestedAmount
+                // currentAmount == remainingAmount
+                // incomming (taker) order filled and matching (maker) order filled
                 executeTrade(buySide, makerAccount, takerAccount, currentAmount);
                 orderList.deleteFirstOrder();
-                return;
+                remainingAmount = remainingAmount.sub(currentAmount);
             }
 
             orderCounter = orderCounter.add(orderCounter);
         }
 
-        // TODO: updateAmount of the incomming (taker) order
         OrderBookLibrary.OrderBook storage orderBook = asks;
         if (buySide) {
             orderBook = bids;
         }
-        uint256 newAmount = requestedAmount.sub(filledAmount);
-        orderBook.updateAmount(price, incommingOrderCounter, newAmount);
+
+        if (remainingAmount == 0) {
+            // delete incomming order
+            orderBook.closeFirstOrderAtPrice(price);
+        } else {
+            // Update amount of the incomming (taker) order
+            // incomming order partially filled
+            orderBook.updateAmount(price, incommingOrderCounter, remainingAmount);
+        }
     }
 
     function fillOrderMarket(
@@ -143,7 +150,7 @@ contract ERC1155Exchange {
     {
         // method variables
         uint256 orderCounter = 0;
-        uint256 filledAmount = 0; // and the end, we want this to be equal to `requestedAmount`
+        uint256 remainingAmount = requestedAmount; // at the end, we want this to be zero
         OrderBookLibrary.OrderBook storage orderBook = asks;
         if (!buySide) {
             orderBook = bids;
@@ -155,7 +162,7 @@ contract ERC1155Exchange {
         uint256 currentAmount;
         address makerAccount;
 
-        while (filledAmount < requestedAmount) {
+        while (remainingAmount > 0) {
             // get order
             (
                 timestamp,
@@ -163,26 +170,25 @@ contract ERC1155Exchange {
                 makerAccount
             ) = orderBook.getOrderByPriceAndIndex(price, orderCounter);
 
-            // calculate requestedAmount
             if (currentAmount > requestedAmount) {
                 // incomming (taker) order filled
                 // matching (maker) order partially filled
                 orderBook.updateAmount(price, orderCounter, currentAmount.sub(requestedAmount));
                 executeTrade(buySide, makerAccount, takerAccount, requestedAmount);
-                return;
-            } else if (currentAmount < requestedAmount) {
+            } else if (currentAmount < remainingAmount) {
                 // incomming (taker) order may be partially filled
                 // matching (maker) order filled
                 // let's continue to fill maker orders
-                filledAmount = filledAmount.add(currentAmount);
+                remainingAmount = remainingAmount.sub(currentAmount);
                 orderCounter = orderCounter.add(1);
                 executeTrade(buySide, makerAccount, takerAccount, currentAmount);
             } else {
                 // matching order amount is eaqul to requestedAmount
                 executeTrade(buySide, makerAccount, takerAccount, currentAmount);
-                return;
             }
         }
+
+
     }
 
     function executeTrade(

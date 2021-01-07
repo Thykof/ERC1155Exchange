@@ -14,12 +14,12 @@ contract TestOrderBookLibrary {
     using Counters for Counters.Counter;
     using QueueLibrary for QueueLibrary.Queue;
 
-    OrderBookLibrary.OrderBook private orderbook;
+    OrderBookLibrary.OrderBook private orderBook; // TODO: reset this in beforEach hook
 
     function testAddOrder1() public {
-        orderbook.buySide = true;
+        orderBook.buySide = true;
 
-        uint256 orderCounter = orderbook.addOrder(520, 5, tx.origin);
+        uint256 orderCounter = orderBook.addOrder(520, 5, tx.origin);
 
         Assert.equal(
             orderCounter,
@@ -28,47 +28,47 @@ contract TestOrderBookLibrary {
         );
 
         Assert.equal(
-            orderbook.prices.first(),
+            orderBook.prices.first(),
             520,
             "First price should be 520"
         );
 
         Assert.equal(
-            orderbook.prices.last(),
+            orderBook.prices.last(),
             520,
             "Last price should be 520"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].queue.first,
+            orderBook.pricesToOrderList[520].queue.first,
             1,
             "queue first should be initialized to 1"
         );
 
         // test orderList.push()
         Assert.equal(
-            orderbook.pricesToOrderList[520].keyToOrder[1].timestamp,
+            orderBook.pricesToOrderList[520].keyToOrder[1].timestamp,
             block.timestamp,
             "timestamp should be block.timestamp"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].keyToOrder[1].amount,
+            orderBook.pricesToOrderList[520].keyToOrder[1].amount,
             5,
             "amount should be 5"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].keyToOrder[1].makerAccount,
+            orderBook.pricesToOrderList[520].keyToOrder[1].makerAccount,
             tx.origin,
             "makerAccount should be tx.origin"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].queue.first,
+            orderBook.pricesToOrderList[520].queue.first,
             1,
             "head should be 1"
         );
     }
 
     function testAddOrder2() public {
-        uint256 orderCounter = orderbook.addOrder(520, 10, tx.origin);
+        uint256 orderCounter = orderBook.addOrder(520, 10, tx.origin);
 
         Assert.equal(
             orderCounter,
@@ -77,41 +77,41 @@ contract TestOrderBookLibrary {
         );
 
         Assert.equal(
-            orderbook.prices.first(),
+            orderBook.prices.first(),
             520,
             "First price should be 520"
         );
         Assert.equal(
-            orderbook.prices.last(),
+            orderBook.prices.last(),
             520,
             "Last price should be 520"
         );
 
         // test orderList.push()
         Assert.equal(
-            orderbook.pricesToOrderList[520].keyToOrder[2].timestamp,
+            orderBook.pricesToOrderList[520].keyToOrder[2].timestamp,
             block.timestamp,
             "timestamp should be block.timestamp"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].keyToOrder[2].amount,
+            orderBook.pricesToOrderList[520].keyToOrder[2].amount,
             10,
             "amount should be 10"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].keyToOrder[2].makerAccount,
+            orderBook.pricesToOrderList[520].keyToOrder[2].makerAccount,
             tx.origin,
             "makerAccount should be tx.origin"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[520].queue.last,
+            orderBook.pricesToOrderList[520].queue.last,
             2,
             "last should be 2"
         );
     }
 
     function testAddOrder3() public {
-        uint256 orderCounter = orderbook.addOrder(600, 5, tx.origin);
+        uint256 orderCounter = orderBook.addOrder(600, 5, tx.origin);
 
         Assert.equal(
             orderCounter,
@@ -120,34 +120,34 @@ contract TestOrderBookLibrary {
         );
 
         Assert.equal(
-            orderbook.prices.first(),
+            orderBook.prices.first(),
             520,
             "First price should be 520"
         );
         Assert.equal(
-            orderbook.prices.last(),
+            orderBook.prices.last(),
             600,
             "Last price should be 600"
         );
 
         // test orderList.push()
         Assert.equal(
-            orderbook.pricesToOrderList[600].keyToOrder[1].timestamp,
+            orderBook.pricesToOrderList[600].keyToOrder[1].timestamp,
             block.timestamp,
             "timestamp should be block.timestamp"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[600].keyToOrder[1].amount,
+            orderBook.pricesToOrderList[600].keyToOrder[1].amount,
             5,
             "amount should be 10"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[600].keyToOrder[1].makerAccount,
+            orderBook.pricesToOrderList[600].keyToOrder[1].makerAccount,
             tx.origin,
             "makerAccount should be tx.origin"
         );
         Assert.equal(
-            orderbook.pricesToOrderList[600].queue.last,
+            orderBook.pricesToOrderList[600].queue.last,
             1,
             "last should be 1"
         );
@@ -159,7 +159,7 @@ contract TestOrderBookLibrary {
             uint256 price,
             uint256 amount,
             address makerAccount
-        ) = orderbook.getBestOrder();
+        ) = orderBook.getBestOrder();
 
         Assert.notEqual(
             timestamp,
@@ -183,147 +183,55 @@ contract TestOrderBookLibrary {
         );
     }
 
-    // function testGetOrder1() public {
-    //     (
-    //         uint256 timestamp,
-    //         uint256 price,
-    //         uint256 amount,
-    //         address makerAccount
-    //     ) = orderbook.getOrder(0);
-    //
-    //     Assert.equal(
-    //         price,
-    //         600,
-    //         "price should be 600"
-    //     );
-    //     Assert.notEqual(
-    //         timestamp,
-    //         0,
-    //         "timestamp should not be 0"
-    //         );
-    //     Assert.equal(
-    //         amount,
-    //         5,
-    //         "amount should be 5"
-    //     );
-    //     Assert.equal(
-    //         makerAccount,
-    //         tx.origin,
-    //         "makerAccount should be tx.origin"
-    //     );
-    // }
-    //
-    // function testGetOrder2() public {
-    //     (
-    //         uint256 timestamp,
-    //         uint256 price,
-    //         uint256 amount,
-    //         address makerAccount
-    //     ) = orderbook.getOrder(1);
-    //
-    //     Assert.equal(
-    //         price,
-    //         520,
-    //         "price should be 520"
-    //     );
-    //     Assert.notEqual(
-    //         timestamp,
-    //         0,
-    //         "timestamp should not be 0"
-    //         );
-    //     Assert.equal(
-    //         amount,
-    //         5,
-    //         "amount should be 5"
-    //     );
-    //     Assert.equal(
-    //         makerAccount,
-    //         tx.origin,
-    //         "makerAccount should be tx.origin"
-    //     );
-    // }
-    //
-    // function testGetOrder3() public {
-    //     (
-    //         uint256 timestamp,
-    //         uint256 price,
-    //         uint256 amount,
-    //         address makerAccount
-    //     ) = orderbook.getOrder(2);
-    //
-    //     Assert.equal(
-    //         price,
-    //         520,
-    //         "price should be 520"
-    //     );
-    //     Assert.notEqual(
-    //         timestamp,
-    //         0,
-    //         "timestamp should not be 0"
-    //         );
-    //     Assert.equal(
-    //         amount,
-    //         10,
-    //         "amount should be 10"
-    //     );
-    //     Assert.equal(
-    //         makerAccount,
-    //         tx.origin,
-    //         "makerAccount should be tx.origin"
-    //     );
-    // }
-    //
-    // function testGetOrder4() public {
-    //     (
-    //         uint256 timestamp,
-    //         uint256 price,
-    //         uint256 amount,
-    //         address makerAccount
-    //     ) = orderbook.getOrder(3);
-    //
-    //     Assert.equal(
-    //         price,
-    //         0,
-    //         "price should be 0"
-    //     );
-    //     Assert.equal(
-    //         timestamp,
-    //         0,
-    //         "timestamp should be 0"
-    //         );
-    //     Assert.equal(
-    //         amount,
-    //         0,
-    //         "amount should be 0"
-    //     );
-    //     Assert.equal(
-    //         makerAccount,
-    //         address(0),
-    //         "makerAccount should be the 0 address"
-    //     );
-    // }
-    //
+    function testGetOrderByPriceAndIndex() public {
+
+    }
+
     function testCheckForMatchingOrder() public {
         Assert.equal(
-            orderbook.checkForMatchingOrder(520),
+            orderBook.checkForMatchingOrder(520),
             true,
             "order with price 520 exists."
         );
 
         Assert.equal(
-            orderbook.checkForMatchingOrder(10),
+            orderBook.checkForMatchingOrder(10),
             false,
             "order with price 10 does not exist."
         );
     }
 
-    function testCloseOrder() public {
-
+    function testCloseFirstOrderAtPrice() public {
+        orderBook.closeFirstOrderAtPrice(600);
+        Assert.equal(
+            orderBook.prices.exists(600),
+            false,
+            "600 price does not exists in tree price"
+        );
     }
 
     function testUpdateAmount() public {
+        orderBook.updateAmount(520, 2, 7);
 
+        Assert.notEqual(
+            orderBook.pricesToOrderList[520].keyToOrder[2].timestamp,
+            0,
+            "timestamp should be not be 0"
+        );
+        Assert.equal(
+            orderBook.pricesToOrderList[520].keyToOrder[2].amount,
+            7,
+            "amount should be 7"
+        );
+        Assert.equal(
+            orderBook.pricesToOrderList[520].keyToOrder[2].makerAccount,
+            tx.origin,
+            "makerAccount should be tx.origin"
+        );
+        Assert.equal(
+            orderBook.pricesToOrderList[520].queue.last,
+            2,
+            "last should be 2"
+        );
     }
-
-
 }

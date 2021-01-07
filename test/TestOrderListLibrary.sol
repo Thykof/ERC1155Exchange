@@ -104,7 +104,7 @@ contract TestOrderListLibrary {
         orderList.push(5, tx.origin);
 
         Assert.equal(
-            orderList.exists(0),
+            orderList.exists(2),
             true,
             "0 exists"
         );
@@ -112,9 +112,17 @@ contract TestOrderListLibrary {
         orderList.push(6, tx.origin);
 
         Assert.equal(
-            orderList.exists(1),
+            orderList.exists(3),
             true,
             "1 exists"
+        );
+    }
+
+    function testIsEmpty() public {
+        Assert.equal(
+            orderList.isEmpty(),
+            false,
+            "orderList is not empty"
         );
     }
 
