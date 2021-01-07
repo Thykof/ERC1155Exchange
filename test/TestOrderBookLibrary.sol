@@ -183,10 +183,6 @@ contract TestOrderBookLibrary {
         );
     }
 
-    function testGetOrderByPriceAndIndex() public {
-
-    }
-
     function testCheckForMatchingOrder() public {
         Assert.equal(
             orderBook.checkForMatchingOrder(520),

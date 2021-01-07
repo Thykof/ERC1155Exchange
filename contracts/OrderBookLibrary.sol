@@ -59,27 +59,6 @@ library OrderBookLibrary {
         }
     }
 
-    function getOrderByPriceAndIndex(
-        OrderBook storage self,
-        uint256 price,
-        uint256 orderKey
-    )
-        internal
-        view
-        returns (
-            uint256 timestamp,
-            uint256 amount,
-            address makerAccount
-        )
-    {
-        // TODO: add tests
-        (
-            timestamp,
-            amount,
-            makerAccount
-        ) = self.pricesToOrderList[price].get(orderKey);
-    }
-
     function updateAmount(
         OrderBook storage self,
         uint256 price,
