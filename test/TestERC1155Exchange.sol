@@ -18,13 +18,13 @@ contract TestERC1155Exchange {
     }
 
     function beforeEachAgain() public {
-        exchange.addOrder(true, 600, 5, address(1), true);
-        exchange.addOrder(true, 520, 5, address(2), true);
-        exchange.addOrder(true, 520, 10, address(3), true);
-        exchange.addOrder(false, 700, 7, address(4), true);
+        exchange.addOrder(true, 600, 5);
+        exchange.addOrder(true, 520, 5);
+        exchange.addOrder(true, 520, 10);
+        exchange.addOrder(false, 700, 7);
     }
 
     function testFillOrderLimit() public {
-        exchange.addOrder(false, 600, 5, address(5), true);
+        exchange.addOrder(false, 600, 5);
     }
 }

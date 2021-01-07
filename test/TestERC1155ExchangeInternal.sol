@@ -5,10 +5,10 @@ import "truffle/Assert.sol";
 import "../contracts/ERC1155Exchange.sol";
 
 
-contract TestERC1155ExchangeInternal is ERC1155Exchange {
+contract TestERC1155ExchangeInternal is ERC1155Exchange(1) {
     function testAddOrderAndCheckForMatchingOrder() public {
-        addOrder(true, 520, 1, address(0), true);
-        addOrder(false, 700, 1, address(0), true);
+        addOrder(true, 520, 1);
+        addOrder(false, 700, 1);
 
         Assert.equal(
             checkForMatchingOrder(false, 520),
