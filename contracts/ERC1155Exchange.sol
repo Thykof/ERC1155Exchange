@@ -12,6 +12,37 @@ contract ERC1155Exchange {
     using OrderListLibrary for OrderListLibrary.OrderList;
     using SafeMath for uint256;
 
+    // Copied from:
+    // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.2.0/contracts/token/ERC1155/IERC1155.sol
+    event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
+
+    event OrderAdded(
+        uint256 indexed tokenId,
+        bool buySide,
+        uint256 price,
+        uint256 indexed amount,
+        address indexed makerAccount
+    );
+
+    event OrderFilled(
+        uint256 indexed tokenId,
+        bool partiallyFilled,
+        bool buySide,
+        uint256 price,
+        uint256 amount,
+        address indexed makerAccount,
+        address indexed takerAccount
+    );
+
+    event TradeExecuted(
+        uint256 indexed tokenId,
+        bool buySide,
+        uint256 amount,
+        address indexed buyerAccount,
+        address indexed sellerAccount,
+        uint256 pendingWithdrawals
+    );
+
     uint256 public tokenId;
     mapping (address => uint) public pendingWithdrawals;
 
@@ -19,6 +50,12 @@ contract ERC1155Exchange {
     OrderBookLibrary.OrderBook internal asks; // sell side
 
     ERC1155Interface private tokenContract;
+
+    struct SimpleOrder {
+        uint256 timestamp;
+        uint256 amount;
+        address makerAccount;
+    }
 
     constructor(uint256 id) public {
         bids.buySide = true;
@@ -60,7 +97,7 @@ contract ERC1155Exchange {
         } else {
             // Check if exchange contract is approved in token contract
             require(
-                tokenContract.checkApproved(tokenId, msg.sender),
+                tokenContract.checkApproved(tokenId, makerAccount),
                 "ERC1155Exchange: sender has not approved exchange contract"
             );
             incommingOrderCounter = asks.addOrder(price, amount, makerAccount);
@@ -77,6 +114,14 @@ contract ERC1155Exchange {
                 incommingOrderCounter
             );
         }
+
+        emit OrderAdded(
+            tokenId,
+            buySide,
+            price,
+            amount,
+            makerAccount
+        );
     }
 
     function checkForMatchingOrder(bool buySide, uint256 price)
@@ -109,9 +154,7 @@ contract ERC1155Exchange {
 
         uint256 remainingAmount = requestedAmount; // at the end, we want this to be 0
 
-        uint256 timestamp;
-        uint256 currentAmount;
-        address makerAccount;
+        SimpleOrder memory currentOrder;
 
         OrderBookLibrary.OrderBook storage makerOrderBook = asks;
         if (!buySide) {
@@ -120,30 +163,60 @@ contract ERC1155Exchange {
 
         while (remainingAmount > 0 && orderList.exists(orderCounter)) {
             (
-                timestamp,
-                currentAmount,
-                makerAccount
+                currentOrder.timestamp,
+                currentOrder.amount,
+                currentOrder.makerAccount
             ) = orderList.get(orderCounter);
 
-            if (currentAmount > remainingAmount) {
+            if (currentOrder.amount > remainingAmount) {
                 // incomming (taker) order filled
                 // matching (maker) order partially filled
-                executeTrade(price, buySide, makerAccount, takerAccount, remainingAmount);
-                makerOrderBook.updateAmount(price, orderCounter, currentAmount.sub(remainingAmount));
+                executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, remainingAmount);
+                emit OrderFilled(
+                    tokenId,
+                    false,
+                    buySide,
+                    price,
+                    remainingAmount,
+                    currentOrder.makerAccount,
+                    takerAccount
+                );
+
+                makerOrderBook.updateAmount(price, orderCounter, currentOrder.amount.sub(remainingAmount));
                 remainingAmount = remainingAmount.sub(remainingAmount); // => remainingAmount = 0
-            } else if (currentAmount < remainingAmount) {
+            } else if (currentOrder.amount < remainingAmount) {
                 // incomming (taker) order may be partially filled
                 // matching (maker) order filled
                 // let's continue to fill maker orders
-                executeTrade(price, buySide, makerAccount, takerAccount, currentAmount);
+                executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, currentOrder.amount);
+                emit OrderFilled(
+                    tokenId,
+                    true,
+                    buySide,
+                    price,
+                    currentOrder.amount,
+                    currentOrder.makerAccount,
+                    takerAccount
+                );
+
                 orderList.deleteFirstOrder();
-                remainingAmount = remainingAmount.sub(currentAmount);
+                remainingAmount = remainingAmount.sub(currentOrder.amount);
             } else {
-                // currentAmount == remainingAmount
+                // currentOrder.amount == remainingAmount
                 // incomming (taker) order filled and matching (maker) order filled
-                executeTrade(price, buySide, makerAccount, takerAccount, currentAmount);
+                executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, currentOrder.amount);
+                emit OrderFilled(
+                    tokenId,
+                    false,
+                    buySide,
+                    price,
+                    currentOrder.amount,
+                    currentOrder.makerAccount,
+                    takerAccount
+                );
+
                 orderList.deleteFirstOrder();
-                remainingAmount = remainingAmount.sub(currentAmount);
+                remainingAmount = remainingAmount.sub(currentOrder.amount);
             }
 
             orderCounter = orderCounter.add(orderCounter);
@@ -177,14 +250,15 @@ contract ERC1155Exchange {
         address seller;
 
         if (buySide) {
-            buyer = makerAccount;
-            seller = takerAccount;
-        } else {
             buyer = takerAccount;
             seller = makerAccount;
+        } else {
+            buyer = makerAccount;
+            seller = takerAccount;
         }
 
         tokenContract.executeTrade(
+            tokenId,
             buyer,
             seller,
             amount
@@ -193,6 +267,15 @@ contract ERC1155Exchange {
         // Add withdrawal for seller
         pendingWithdrawals[seller] = pendingWithdrawals[seller].add(
             getWeiPrice(price, amount)
+        );
+
+        emit TradeExecuted(
+            tokenId,
+            buySide,
+            amount,
+            buyer,
+            seller,
+            pendingWithdrawals[seller]
         );
     }
 
