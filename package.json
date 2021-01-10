@@ -10,7 +10,8 @@
     "fake-eth": "ganache-cli -m annual immense okay want split empty total tag view media debris barely",
     "compile": "truffle compile",
     "deploy": "truffle deploy",
-    "test": "truffle test"
+    "test": "truffle test",
+    "coverage": "truffle run coverage"
   },
   "author": "",
   "license": "ISC",
