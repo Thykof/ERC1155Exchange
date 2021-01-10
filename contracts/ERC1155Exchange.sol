@@ -4,12 +4,14 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./OrderBookLibrary.sol";
 import "./OrderListLibrary.sol";
+import "./BokkyPooBahsRedBlackTreeLibrary.sol";
 import "./ERC1155Interface.sol";
 
 
 contract ERC1155Exchange {
     using OrderBookLibrary for OrderBookLibrary.OrderBook;
     using OrderListLibrary for OrderListLibrary.OrderList;
+    using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
     using SafeMath for uint256;
 
     // Copied from:
@@ -45,11 +47,10 @@ contract ERC1155Exchange {
 
     uint256 public tokenId;
     mapping (address => uint) public pendingWithdrawals;
+    ERC1155Interface public tokenContract;
 
-    OrderBookLibrary.OrderBook internal bids; // buy side
-    OrderBookLibrary.OrderBook internal asks; // sell side
-
-    ERC1155Interface private tokenContract;
+    OrderBookLibrary.OrderBook private bids; // buy side
+    OrderBookLibrary.OrderBook private asks; // sell side
 
     struct SimpleOrder {
         uint256 timestamp;
@@ -71,6 +72,65 @@ contract ERC1155Exchange {
         // sending to prevent re-entrancy attacks
         pendingWithdrawals[msg.sender] = 0;
         msg.sender.transfer(amount);
+    }
+
+    function getBestOrder(
+        bool buySide
+    )
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            address
+        )
+    {
+        if (buySide) {
+            return bids.getBestOrder();
+        } else {
+            return asks.getBestOrder();
+        }
+    }
+
+    function getNextPrice(
+        bool buySide,
+        uint256 price
+    )
+        public
+        view
+        returns (
+            uint256
+        )
+    {
+        if (buySide) {
+            return bids.prices.prev(price);
+        } else {
+            return asks.prices.next(price);
+        }
+    }
+
+    function getOrderAtPrice(
+        bool buySide,
+        uint256 price,
+        uint256 index
+    )
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            address
+        )
+    {
+        OrderListLibrary.OrderList storage orderList = asks.pricesToOrderList[price];
+        if (buySide) {
+            orderList = bids.pricesToOrderList[price];
+        }
+
+        uint256 orderCounter = index.add(orderList.firstKey());
+
+        return orderList.get(orderCounter);
     }
 
     function addOrder(
