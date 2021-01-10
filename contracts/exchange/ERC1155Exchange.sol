@@ -2,55 +2,19 @@ pragma solidity 0.6.2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "./OrderBookLibrary.sol";
-import "./OrderListLibrary.sol";
-import "./BokkyPooBahsRedBlackTreeLibrary.sol";
-import "./ERC1155Interface.sol";
+import "./ERC1155ExchangeStorage.sol";
+import "./ERC1155ExchangeEvents.sol";
+import "../libraries/OrderBookLibrary.sol";
+import "../libraries/OrderListLibrary.sol";
+import "../libraries/BokkyPooBahsRedBlackTreeLibrary.sol";
+import "../erc1155/TradableERC1155Interface.sol";
 
 
-contract ERC1155Exchange {
+contract ERC1155Exchange is ERC1155ExchangeStorage, ERC1155ExchangeEvents {
+    using SafeMath for uint256;
     using OrderBookLibrary for OrderBookLibrary.OrderBook;
     using OrderListLibrary for OrderListLibrary.OrderList;
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
-    using SafeMath for uint256;
-
-    // Copied from:
-    // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.2.0/contracts/token/ERC1155/IERC1155.sol
-    event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
-
-    event OrderAdded(
-        uint256 indexed tokenId,
-        bool buySide,
-        uint256 price,
-        uint256 indexed amount,
-        address indexed makerAccount
-    );
-
-    event OrderFilled(
-        uint256 indexed tokenId,
-        bool partiallyFilled,
-        bool buySide,
-        uint256 price,
-        uint256 amount,
-        address indexed makerAccount,
-        address indexed takerAccount
-    );
-
-    event TradeExecuted(
-        uint256 indexed tokenId,
-        bool buySide,
-        uint256 amount,
-        address indexed buyerAccount,
-        address indexed sellerAccount,
-        uint256 pendingWithdrawals
-    );
-
-    uint256 public tokenId;
-    mapping (address => uint) public pendingWithdrawals;
-    ERC1155Interface public tokenContract;
-
-    OrderBookLibrary.OrderBook private bids; // buy side
-    OrderBookLibrary.OrderBook private asks; // sell side
 
     struct SimpleOrder {
         uint256 timestamp;
@@ -61,7 +25,7 @@ contract ERC1155Exchange {
     constructor(uint256 id) public {
         bids.buySide = true;
         asks.buySide = false;
-        tokenContract = ERC1155Interface(msg.sender);
+        tokenContract = TradableERC1155Interface(msg.sender);
         tokenId = id;
     }
 
