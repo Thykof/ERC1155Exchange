@@ -10,7 +10,7 @@ import "../libraries/BokkyPooBahsRedBlackTreeLibrary.sol";
 import "../erc1155/TradableERC1155Interface.sol";
 
 
-contract ERC1155Exchange is ERC1155ExchangeStorage, ERC1155ExchangeEvents {
+contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeStorage, ERC1155ExchangeEvents {
     using SafeMath for uint256;
     using OrderBookLibrary for OrderBookLibrary.OrderBook;
     using OrderListLibrary for OrderListLibrary.OrderList;
