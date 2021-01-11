@@ -1,7 +1,5 @@
 # POC red-black binary tree scalability
 
-	npx ganache-cli -m annual immense okay want split empty total tag view media debris barely
-
 	npx nodemon --watch contracts --ext sol --exec npm run compile
 
 	npx nodemon --exec npm run deploy

@@ -1,14 +1,13 @@
 pragma solidity 0.6.2;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
 
-import "./ERC1155Interface.sol";
-import "./ERC1155Exchange.sol";
+import "./TradableERC1155InterfaceBase.sol";
+import "../exchange/ProxyAndStorageForERC1155Exchange.sol";
 
 
-contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
-    using SafeMath for uint256;
+contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
 
     event TokenCreated(
         address account,
@@ -17,12 +16,26 @@ contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
         address exchangeAddress
     );
 
-    address public owner;
-    mapping(address => uint256) private exchangesToTokenId;
-    mapping(uint256 => address) private tokenIdToExchange;
+    mapping(uint256 => address payable) private tokenIdToProxyExchange;
+    uint256[] private tokenIdList;
+    address private exchangeImplementationAddress;
 
-    constructor() public {
-        owner = msg.sender;
+    constructor(address initialImplementation) public {
+        exchangeImplementationAddress = initialImplementation;
+    }
+
+    function upgradeOne(address implementation, uint256 tokenId)
+        public
+        onlyOwner
+    {
+        upgrade(ProxyAndStorageForERC1155Exchange(tokenIdToProxyExchange[tokenId]), implementation);
+    }
+
+    function upgradeAll(address implementation) public onlyOwner {
+        exchangeImplementationAddress = implementation;
+        for (uint256 tokenId = 0; tokenId < tokenIdList.length; tokenId++) {
+            upgrade(ProxyAndStorageForERC1155Exchange(tokenIdToProxyExchange[tokenId]), implementation);
+        }
     }
 
     function newToken(
@@ -31,37 +44,22 @@ contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
         uint256 amount
     )
         public
-        returns (ERC1155Exchange exchange)
+        returns (ProxyAndStorageForERC1155Exchange exchange)
     {
-        require(msg.sender == owner, "ERC1155Tokens: Sender is not contract owner");
-        require(tokenId != 0, "ERC1155Tokens: tokenId can't be zero");
-        require(tokenIdToExchange[tokenId] == address(0), "ERC1155Tokens: token already created");
+        require(msg.sender == owner(), "ERC1155Token: Sender is not contract owner");
+        require(tokenId != 0, "ERC1155Token: tokenId can't be zero");
+        require(tokenIdToProxyExchange[tokenId] == address(0), "ERC1155Token: token already created");
 
         _mint(account, tokenId, amount, new bytes(0));
 
-        exchange = new ERC1155Exchange(tokenId);
-        exchangesToTokenId[address(exchange)] = tokenId;
-        tokenIdToExchange[tokenId] = address(exchange);
+        exchange = new ProxyAndStorageForERC1155Exchange(
+            exchangeImplementationAddress,
+            abi.encodeWithSignature("initialize(address,uint256)", address(this), tokenId)
+        );
+        tokenIdToProxyExchange[tokenId] = address(exchange);
+        tokenIdList.push(tokenId);
 
         emit TokenCreated(account, tokenId, amount, address(exchange));
-    }
-
-    function checkApproved(
-        uint256 tokenId,
-        address account
-    )
-        public
-        override
-        returns (bool)
-    {
-        require(msg.sender != owner, "ERC1155Tokens: Sender is contract owner");
-
-        uint256 id = exchangesToTokenId[msg.sender];
-        require(id != 0, "ERC1155Tokens: Sender is not an exchange");
-        require(id == tokenId, "ERC1155Tokens: bad tokenId");
-        require(msg.sender == tokenIdToExchange[tokenId], "ERC1155Tokens: Bad sender");
-
-        return isApprovedForAll(account, msg.sender);
     }
 
     function executeTrade(
@@ -73,12 +71,7 @@ contract ERC1155Tokens is ERC1155(""), ERC1155Interface {
         public
         override
     {
-        require(msg.sender != owner, "ERC1155Tokens: Sender is contract owner");
-
-        uint256 id = exchangesToTokenId[msg.sender];
-        require(id != 0, "ERC1155Tokens: Sender is not an exchange");
-        require(id == tokenId, "ERC1155Tokens: bad tokenId");
-        require(msg.sender == tokenIdToExchange[tokenId], "ERC1155Tokens: Bad sender");
+        require(msg.sender == tokenIdToProxyExchange[tokenId], "ERC1155Token: Bad sender");
 
         safeTransferFrom(seller, buyer, tokenId, amount, new bytes(0));
     }

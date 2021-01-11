@@ -1,7 +1,7 @@
 pragma solidity 0.6.2;
 
 import "truffle/Assert.sol";
-import "../contracts/QueueLibrary.sol";
+import "../contracts/libraries/QueueLibrary.sol";
 
 
 contract TestQueueLibrary {

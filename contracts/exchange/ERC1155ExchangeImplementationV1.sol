@@ -1,8 +1,8 @@
 pragma solidity 0.6.2;
 
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "./ERC1155ExchangeStorage.sol";
 import "./ERC1155ExchangeEvents.sol";
 import "../libraries/OrderBookLibrary.sol";
 import "../libraries/OrderListLibrary.sol";
@@ -10,7 +10,8 @@ import "../libraries/BokkyPooBahsRedBlackTreeLibrary.sol";
 import "../erc1155/TradableERC1155Interface.sol";
 
 
-contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeStorage, ERC1155ExchangeEvents {
+contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable {
+
     using SafeMath for uint256;
     using OrderBookLibrary for OrderBookLibrary.OrderBook;
     using OrderListLibrary for OrderListLibrary.OrderList;
@@ -22,10 +23,18 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeStorage, ERC1155Excha
         address makerAccount;
     }
 
-    constructor(uint256 id) public {
+    uint256 public tokenId;
+    mapping (address => uint) public pendingWithdrawals;
+    TradableERC1155Interface public tokenContract;
+
+    OrderBookLibrary.OrderBook internal bids; // buy side
+    OrderBookLibrary.OrderBook internal asks; // sell side
+
+    // this function replace the constructor
+    function initialize(address tradableERC1155, uint256 id) public initializer {
         bids.buySide = true;
         asks.buySide = false;
-        tokenContract = TradableERC1155Interface(msg.sender);
+        tokenContract = TradableERC1155Interface(tradableERC1155);
         tokenId = id;
     }
 
@@ -121,7 +130,7 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeStorage, ERC1155Excha
         } else {
             // Check if exchange contract is approved in token contract
             require(
-                tokenContract.checkApproved(tokenId, makerAccount),
+                tokenContract.isApprovedForAll(makerAccount, address(this)),
                 "ERC1155Exchange: sender has not approved exchange contract"
             );
             incommingOrderCounter = asks.addOrder(price, amount, makerAccount);

@@ -5,8 +5,8 @@ import "truffle/Assert.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "../contracts/OrderListLibrary.sol";
-import "../contracts/QueueLibrary.sol";
+import "../contracts/libraries/OrderListLibrary.sol";
+import "../contracts/libraries/QueueLibrary.sol";
 
 
 contract TestOrderListLibrary {

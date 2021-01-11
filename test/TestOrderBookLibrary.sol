@@ -1,9 +1,9 @@
 pragma solidity 0.6.2;
 
 import "truffle/Assert.sol";
-import "../contracts/OrderBookLibrary.sol";
-import "../contracts/BokkyPooBahsRedBlackTreeLibrary.sol";
-import "../contracts/QueueLibrary.sol";
+import "../contracts/libraries/OrderBookLibrary.sol";
+import "../contracts/libraries/BokkyPooBahsRedBlackTreeLibrary.sol";
+import "../contracts/libraries/QueueLibrary.sol";
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 
