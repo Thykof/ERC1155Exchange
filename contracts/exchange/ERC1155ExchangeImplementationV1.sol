@@ -179,10 +179,18 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
     )
         internal
     {
+        // Get matching order book
+        OrderBookLibrary.OrderBook storage matchingOrderBook = asks;
+        if (!buySide) {
+            matchingOrderBook = bids;
+        }
+
+        // Get matching order list
         OrderListLibrary.OrderList storage orderList = asks.pricesToOrderList[price];
         if (!buySide) {
             orderList = bids.pricesToOrderList[price];
         }
+
         uint256 orderCounter = orderList.firstKey();
 
         uint256 remainingAmount = requestedAmount; // at the end, we want this to be 0
@@ -232,7 +240,7 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
                     takerAccount
                 );
 
-                orderList.deleteFirstOrder();
+                matchingOrderBook.closeFirstOrderAtPrice(price);
                 remainingAmount = remainingAmount.sub(currentOrder.amount);
             } else {
                 // currentOrder.amount == remainingAmount
@@ -248,7 +256,7 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
                     takerAccount
                 );
 
-                orderList.deleteFirstOrder();
+                matchingOrderBook.closeFirstOrderAtPrice(price);
                 remainingAmount = remainingAmount.sub(currentOrder.amount);
             }
 

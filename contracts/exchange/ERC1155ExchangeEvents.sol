@@ -24,7 +24,7 @@ contract ERC1155ExchangeEvents {
         address indexed makerAccount,
         address indexed takerAccount
     );
-
+    // TODO: merge those 2 events
     event TradeExecuted(
         uint256 indexed tokenId,
         bool buySide,
