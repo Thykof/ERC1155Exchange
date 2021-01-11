@@ -1,6 +1,6 @@
 const truffleAssert = require('truffle-assertions')
 
-const { checkNullOrder, checkTradeExecuted } = require('./utils')
+const { checkNullOrder, checkOrderAdded, checkTradeExecuted } = require('./utils')
 
 const ERC1155Token = artifacts.require('ERC1155Token')
 const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForERC1155Exchange')
@@ -42,7 +42,8 @@ contract("ERC1155", accounts => {
         { value: price * amount, from: shareholder }
       )
 
-      checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, owner, shareholder)
+      checkOrderAdded(result, exchangeAddress, tokenId, price, amount, shareholder, true)
+      checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, shareholder, owner, false, true)
 
       assert.equal(await exchange.pendingWithdrawals(owner), price * amount)
     })
@@ -52,6 +53,7 @@ contract("ERC1155", accounts => {
   describe("Complex transactions", async () => {
     before(async () => {
       tokenId = 2
+      const amount = 10
 
       const {logs} = await tokens.newToken(owner, tokenId, 300)
 
@@ -65,12 +67,26 @@ contract("ERC1155", accounts => {
 
     it("Buy all", async () => {
       const amount = 10
-      const result = await exchange.addOrder(true, price, amount,
-        { value: price * amount, from: shareholder })
+      let result = await exchange.addOrder(true, price, amount,
+        { value: price * amount, from: shareholder }
+      )
 
-      checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, owner, shareholder)
+      checkOrderAdded(result, exchangeAddress, tokenId, price, amount, shareholder, true)
+      checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, shareholder, owner, false, true)
 
       assert.equal(await exchange.pendingWithdrawals(owner), price * amount)
+
+      result = await exchange.getBestOrder(true)
+      checkNullOrder(result)
+      result = await exchange.getBestOrder(false)
+      checkNullOrder(result)
+    })
+
+    it("Orderbooks must be empty", async () => {
+      result = await exchange.getBestOrder(true)
+      checkNullOrder(result)
+      result = await exchange.getBestOrder(false)
+      checkNullOrder(result)
     })
 
     it("Order: sell 5", async () => {
@@ -83,29 +99,32 @@ contract("ERC1155", accounts => {
       result = await exchange.addOrder(true, 800, 10,
         { value: 800*10, from: owner }
       )
-      truffleAssert.eventEmitted(result, 'TransferSingle', ev =>
-        ev.operator === exchangeAddress &&
-        ev.from === shareholder &&
-        ev.to === owner &&
-        ev.id.toNumber() === tokenId &&
-        ev.value.toNumber() === 5
-      )
+      checkOrderAdded(result, exchangeAddress, tokenId, 800, 10, owner, true)
+      checkTradeExecuted(result, exchangeAddress, tokenId, 800, 5, owner, shareholder, true, true)
+
+      // Check orderbooks
+      // buy side
+      result = await exchange.getBestOrder(true)
+      assert.notEqual(result['0'].toNumber(), 0)
+      assert.equal(result['1'].toNumber(), 800)
+      assert.equal(result['2'].toNumber(), 5)
+      assert.equal(result['3'], owner)
+
+      // Sell side
+      result = await exchange.getBestOrder(false)
+      checkNullOrder(result)
 
       // 2nd sell order
       result = await exchange.addOrder(false, 800, 5,
         { from: shareholder }
       )
-      truffleAssert.eventEmitted(result, 'TransferSingle', ev =>
-        ev.operator === exchangeAddress &&
-        ev.from === shareholder &&
-        ev.to === owner &&
-        ev.id.toNumber() === tokenId &&
-        ev.value.toNumber() === 5
-      )
+      checkOrderAdded(result, exchangeAddress, tokenId, 800, 5, shareholder, false)
+      checkTradeExecuted(result, exchangeAddress, tokenId, 800, 5, owner, shareholder, false, false)
 
       result = await exchange.getBestOrder(true)
       checkNullOrder(result)
       result = await exchange.getBestOrder(false)
+      console.log(result);
       checkNullOrder(result)
     })
   })

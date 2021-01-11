@@ -9,42 +9,60 @@ const checkNullOrder = result => {
   assert.equal(result['3'], ZERO_ADDRESS)
 }
 
-const checkTradeExecuted = (result, exchangeAddress, tokenId, price, amount, seller, buyer) => {
-  truffleAssert.eventEmitted(result, 'OrderAdded', ev =>
-    ev.tokenId.toNumber() === tokenId &&
-    ev.buySide === true &&
-    ev.price.toNumber() === price &&
-    ev.amount.toNumber() === amount &&
-    ev.makerAccount === buyer
-  )
+const checkOrderAdded = (result,
+  exchangeAddress,
+  tokenId,
+  price,
+  amount,
+  maker,
+  buySide
+) => {
+  let event = result.logs.find(l => l.event === 'OrderAdded')
+  assert.equal(event.args.tokenId.toNumber(), tokenId)
+  assert.equal(event.args.buySide, buySide)
+  assert.equal(event.args.price.toNumber(), price)
+  assert.equal(event.args.amount.toNumber(), amount)
+  assert.equal(event.args.makerAccount, maker)
+}
 
-  truffleAssert.eventEmitted(result, 'OrderFilled', ev =>
-    ev.tokenId.toNumber() === tokenId &&
-    ev.partiallyFilled === false &&
-    ev.buySide === true &&
-    ev.price.toNumber() === price &&
-    ev.amount.toNumber() === amount &&
-    ev.makerAccount === seller &&
-    ev.takerAccount === buyer
-  )
+const checkTradeExecuted = (
+  result,
+  exchangeAddress,
+  tokenId,
+  price,
+  amount,
+  buyer,
+  seller,
+  partiallyFilled,
+  buySide
+) => {
+  let event
 
-  truffleAssert.eventEmitted(result, 'TradeExecuted', ev =>
-    ev.tokenId.toNumber() === tokenId &&
-    ev.buySide === true &&
-    ev.amount.toNumber() === amount &&
-    ev.buyerAccount === buyer &&
-    ev.sellerAccount === seller &&
-    ev.pendingWithdrawals.toNumber() === price * amount
-  )
+  event = result.logs.find(l => l.event === 'OrderFilled')
+  assert.equal(event.args.tokenId.toNumber(), tokenId)
+  assert.equal(event.args.partiallyFilled, partiallyFilled)
+  assert.equal(event.args.buySide, buySide)
+  assert.equal(event.args.price.toNumber(), price)
+  assert.equal(event.args.amount.toNumber(), amount)
+  assert.equal(event.args.makerAccount, seller)
+  assert.equal(event.args.takerAccount, buyer)
 
-  truffleAssert.eventEmitted(result, 'TransferSingle', ev =>
-    ev.operator === exchangeAddress &&
-    ev.from === seller &&
-    ev.to === buyer &&
-    ev.id.toNumber() === tokenId &&
-    ev.value.toNumber() === amount
-  )
+  event = result.logs.find(l => l.event === 'TradeExecuted')
+  assert.equal(event.args.tokenId.toNumber(), tokenId)
+  assert.equal(event.args.buySide, buySide)
+  assert.equal(event.args.amount.toNumber(), amount)
+  assert.equal(event.args.buyerAccount, buyer)
+  assert.equal(event.args.sellerAccount, seller)
+  assert.equal(event.args.pendingWithdrawals.toNumber(), price * amount)
+
+  event = result.logs.find(l => l.event === 'TransferSingle')
+  assert.equal(event.args.operator, exchangeAddress)
+  assert.equal(event.args.from, seller)
+  assert.equal(event.args.to, buyer)
+  assert.equal(event.args.id.toNumber(), tokenId)
+  assert.equal(event.args.value.toNumber(), amount)
 }
 
 module.exports.checkNullOrder = checkNullOrder
+module.exports.checkOrderAdded = checkOrderAdded
 module.exports.checkTradeExecuted = checkTradeExecuted
