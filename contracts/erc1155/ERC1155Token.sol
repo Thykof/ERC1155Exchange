@@ -54,7 +54,7 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
 
         exchange = new ProxyAndStorageForERC1155Exchange(
             exchangeImplementationAddress,
-            abi.encodeWithSignature("initialize(address,uint256)", address(this), tokenId)
+            abi.encodeWithSignature("initialize(address,uint256,uint256)", address(this), tokenId, 3)
         );
         tokenIdToProxyExchange[tokenId] = address(exchange);
         tokenIdList.push(tokenId);

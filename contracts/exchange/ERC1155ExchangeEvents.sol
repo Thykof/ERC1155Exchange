@@ -15,22 +15,13 @@ contract ERC1155ExchangeEvents {
         address indexed makerAccount
     );
 
-    event OrderFilled(
-        uint256 indexed tokenId,
-        bool partiallyFilled,
-        bool buySide,
-        uint256 price,
-        uint256 amount,
-        address indexed makerAccount,
-        address indexed takerAccount
-    );
-    // TODO: merge those 2 events
     event TradeExecuted(
         uint256 indexed tokenId,
-        bool buySide,
+        uint256 price,
         uint256 amount,
-        address indexed buyerAccount,
-        address indexed sellerAccount,
-        uint256 pendingWithdrawals
+        address indexed buyer,
+        address indexed seller,
+        address taker,
+        uint256 paidFees
     );
 }

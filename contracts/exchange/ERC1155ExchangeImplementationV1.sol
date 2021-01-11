@@ -23,19 +23,31 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         address makerAccount;
     }
 
+    uint256 feeRate;
+
     uint256 public tokenId;
     mapping (address => uint) public pendingWithdrawals;
+    mapping (address => uint) public feesCredits; // deposit and withdrawal allowed
+    mapping (address => uint) public bonusFeesCredits; // no deposit, no withdrawal
     TradableERC1155Interface public tokenContract;
 
     OrderBookLibrary.OrderBook internal bids; // buy side
     OrderBookLibrary.OrderBook internal asks; // sell side
 
     // this function replace the constructor
-    function initialize(address tradableERC1155, uint256 id) public initializer {
+    function initialize(
+        address tradableERC1155,
+        uint256 _tokenId,
+        uint256 _feeRate
+    )
+        public
+        initializer
+    {
         bids.buySide = true;
         asks.buySide = false;
         tokenContract = TradableERC1155Interface(tradableERC1155);
-        tokenId = id;
+        tokenId = _tokenId;
+        feeRate = _feeRate;
     }
 
     function withdraw() public {
@@ -44,6 +56,19 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         // Remember to zero the pending refund before
         // sending to prevent re-entrancy attacks
         pendingWithdrawals[msg.sender] = 0;
+        msg.sender.transfer(amount);
+    }
+
+    function depositFeeCredit() public payable {
+        require(msg.value > 0, "ERC1155Exchange: Can't deposit zero");
+        feesCredits[msg.sender] = feesCredits[msg.sender].add(msg.value);
+    }
+
+    function withdrawFeeCredit(uint256 amount) public {
+        feesCredits[msg.sender] = feesCredits[msg.sender].sub(
+            amount,
+            "ERC1155Exchange: withdrawal amount exceed balance"
+        );
         msg.sender.transfer(amount);
     }
 
@@ -213,15 +238,6 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
                 // incomming (taker) order filled
                 // matching (maker) order partially filled
                 executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, remainingAmount);
-                emit OrderFilled(
-                    tokenId,
-                    false,
-                    buySide,
-                    price,
-                    remainingAmount,
-                    currentOrder.makerAccount,
-                    takerAccount
-                );
 
                 makerOrderBook.updateAmount(price, orderCounter, currentOrder.amount.sub(remainingAmount));
                 remainingAmount = remainingAmount.sub(remainingAmount); // => remainingAmount = 0
@@ -230,15 +246,6 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
                 // matching (maker) order filled
                 // let's continue to fill maker orders
                 executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, currentOrder.amount);
-                emit OrderFilled(
-                    tokenId,
-                    true,
-                    buySide,
-                    price,
-                    currentOrder.amount,
-                    currentOrder.makerAccount,
-                    takerAccount
-                );
 
                 matchingOrderBook.closeFirstOrderAtPrice(price);
                 remainingAmount = remainingAmount.sub(currentOrder.amount);
@@ -246,15 +253,6 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
                 // currentOrder.amount == remainingAmount
                 // incomming (taker) order filled and matching (maker) order filled
                 executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, currentOrder.amount);
-                emit OrderFilled(
-                    tokenId,
-                    false,
-                    buySide,
-                    price,
-                    currentOrder.amount,
-                    currentOrder.makerAccount,
-                    takerAccount
-                );
 
                 matchingOrderBook.closeFirstOrderAtPrice(price);
                 remainingAmount = remainingAmount.sub(currentOrder.amount);
@@ -310,13 +308,34 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
             getWeiPrice(price, amount)
         );
 
+        // Calculate fees
+        uint256 feesUnit = amount.mul(price).mul(feeRate).div(100).div(3);
+        uint256 paidFees = feesUnit.mul(2);
+        bonusFeesCredits[makerAccount] = bonusFeesCredits[makerAccount]
+            .add(feesUnit);
+        if (paidFees == 0) {
+            paidFees = 1;
+        }
+
+        // Pay fees
+        if (bonusFeesCredits[takerAccount] >= paidFees) {
+            bonusFeesCredits[takerAccount] = bonusFeesCredits[takerAccount]
+                .sub(paidFees);
+        } else {
+            feesCredits[takerAccount] = feesCredits[takerAccount].sub(
+                paidFees,
+                "ERC1155Exchange: not enough fee credit"
+            );
+        }
+
         emit TradeExecuted(
             tokenId,
-            buySide,
+            price,
             amount,
             buyer,
             seller,
-            pendingWithdrawals[seller]
+            takerAccount,
+            paidFees
         );
     }
 
