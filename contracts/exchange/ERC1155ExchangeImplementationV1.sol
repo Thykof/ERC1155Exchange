@@ -34,6 +34,11 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
     OrderBookLibrary.OrderBook internal bids; // buy side
     OrderBookLibrary.OrderBook internal asks; // sell side
 
+    modifier onlyTokenContract {
+        require(msg.sender == address(tokenContract));
+        _;
+    }
+
     // this function replace the constructor
     function initialize(
         address tradableERC1155,
@@ -50,8 +55,7 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         feeRate = _feeRate;
     }
 
-    function setFeeRate(uint256 newFeeRate) public {
-        require(msg.sender == address(tokenContract));
+    function setFeeRate(uint256 newFeeRate) public onlyTokenContract {
         feeRate = newFeeRate;
     }
 
@@ -216,7 +220,9 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         }
 
         // Get matching order list
-        OrderListLibrary.OrderList storage orderList = asks.pricesToOrderList[price];
+        OrderListLibrary.OrderList storage orderList = asks
+            .pricesToOrderList[price];
+
         if (!buySide) {
             orderList = bids.pricesToOrderList[price];
         }
@@ -227,10 +233,6 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
 
         SimpleOrder memory currentOrder;
 
-        OrderBookLibrary.OrderBook storage makerOrderBook = asks;
-        if (!buySide) {
-            makerOrderBook = bids;
-        }
 
         while (remainingAmount > 0 && orderList.exists(orderCounter)) {
             (
@@ -242,30 +244,54 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
             if (currentOrder.amount > remainingAmount) {
                 // incomming (taker) order filled
                 // matching (maker) order partially filled
-                executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, remainingAmount);
+                executeTrade(
+                    price,
+                    buySide,
+                    currentOrder.makerAccount,
+                    takerAccount,
+                    remainingAmount
+                );
 
-                makerOrderBook.updateAmount(price, orderCounter, currentOrder.amount.sub(remainingAmount));
-                remainingAmount = remainingAmount.sub(remainingAmount); // => remainingAmount = 0
+                matchingOrderBook.updateAmount(
+                    price,
+                    orderCounter,
+                    currentOrder.amount.sub(remainingAmount)
+                );
+                // => remainingAmount = 0
+                remainingAmount = remainingAmount.sub(remainingAmount);
             } else if (currentOrder.amount < remainingAmount) {
                 // incomming (taker) order may be partially filled
                 // matching (maker) order filled
                 // let's continue to fill maker orders
-                executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, currentOrder.amount);
+                executeTrade(
+                    price,
+                    buySide,
+                    currentOrder.makerAccount,
+                    takerAccount,
+                    currentOrder.amount
+                );
 
                 matchingOrderBook.closeFirstOrderAtPrice(price);
                 remainingAmount = remainingAmount.sub(currentOrder.amount);
             } else {
                 // currentOrder.amount == remainingAmount
                 // incomming (taker) order filled and matching (maker) order filled
-                executeTrade(price, buySide, currentOrder.makerAccount, takerAccount, currentOrder.amount);
+                executeTrade(
+                    price,
+                    buySide,
+                    currentOrder.makerAccount,
+                    takerAccount,
+                    currentOrder.amount
+                );
 
                 matchingOrderBook.closeFirstOrderAtPrice(price);
-                remainingAmount = remainingAmount.sub(currentOrder.amount);
+                remainingAmount = 0;
             }
 
             orderCounter = orderCounter.add(orderCounter);
         }
 
+        // Get taker order book
         OrderBookLibrary.OrderBook storage incommingOrderBook = asks;
         if (buySide) {
             incommingOrderBook = bids;
@@ -277,7 +303,11 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         } else {
             // Update amount of the incomming (taker) order
             // incomming order partially filled
-            incommingOrderBook.updateAmount(price, incommingOrderCounter, remainingAmount);
+            incommingOrderBook.updateAmount(
+                price,
+                incommingOrderCounter,
+                remainingAmount
+            );
         }
     }
 
@@ -336,10 +366,11 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         returns (uint256)
     {
         // Calculate fees
-        uint256 feesUnit = amount.mul(price).mul(feeRate).div(100).div(3);
-        uint256 fees = feesUnit.mul(2);
+        uint256 fees = amount.mul(price).mul(feeRate).div(100);
+        uint256 bonusFees = fees.div(3);
         bonusFeesCredits[makerAccount] = bonusFeesCredits[makerAccount]
-            .add(feesUnit);
+            .add(bonusFees);
+
         if (fees == 0) {
             fees = 1;
         }

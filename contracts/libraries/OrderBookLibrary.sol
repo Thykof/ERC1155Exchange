@@ -80,6 +80,7 @@ library OrderBookLibrary {
 
         if (self.pricesToOrderList[price].isEmpty()) {
             self.prices.remove(price);
+            delete self.pricesToOrderList[price];
         }
     }
 

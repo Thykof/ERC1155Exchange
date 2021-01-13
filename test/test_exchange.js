@@ -29,6 +29,7 @@ contract("ERC1155", accounts => {
         .args.exchangeAddress
       await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
       exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
+      await exchange.depositFeeCredit({ value: 42, from: shareholder })
       await exchange.addOrder(false, price, 10, { from: owner })
     })
 
@@ -36,14 +37,14 @@ contract("ERC1155", accounts => {
       assert.equal(await tokens.isApprovedForAll(owner, exchangeAddress), true)
     })
 
-    it("Buy one token", async () => {
+    it("Buy 2 tokens", async () => {
       const amount = 2
       const result = await exchange.addOrder(true, price, amount,
         { value: price * amount, from: shareholder }
       )
 
       checkOrderAdded(result, exchangeAddress, tokenId, price, amount, shareholder, true)
-      checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, shareholder, owner, false, true)
+      checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, shareholder, owner, shareholder)
 
       assert.equal(await exchange.pendingWithdrawals(owner), price * amount)
     })
@@ -62,7 +63,9 @@ contract("ERC1155", accounts => {
       await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
       await tokens.setApprovalForAll(exchangeAddress, true, { from: shareholder })
       exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
-      await exchange.addOrder(false, price, 10, { from: owner })
+      await exchange.depositFeeCredit({ value: 50, from: owner })
+      await exchange.depositFeeCredit({ value: 290, from: shareholder })
+      await exchange.addOrder(false, price, amount, { from: owner })
     })
 
     it("Buy all", async () => {
@@ -72,14 +75,9 @@ contract("ERC1155", accounts => {
       )
 
       checkOrderAdded(result, exchangeAddress, tokenId, price, amount, shareholder, true)
-      checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, shareholder, owner, false, true)
+      checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, shareholder, owner, shareholder)
 
       assert.equal(await exchange.pendingWithdrawals(owner), price * amount)
-
-      result = await exchange.getBestOrder(true)
-      checkNullOrder(result)
-      result = await exchange.getBestOrder(false)
-      checkNullOrder(result)
     })
 
     it("Orderbooks must be empty", async () => {
@@ -89,18 +87,28 @@ contract("ERC1155", accounts => {
       checkNullOrder(result)
     })
 
+    it("Check fees credit", async () => {
+      assert.equal((await exchange.feesCredits(shareholder)).toNumber(), 80)
+      assert.equal((await exchange.bonusFeesCredits(owner)).toNumber(), 70)
+    })
+
     it("Order: sell 5", async () => {
       // Sell order
-      await exchange.addOrder(false, 800, 5,
+      result = await exchange.addOrder(false, 800, 5,
         { from: shareholder }
       )
+      checkOrderAdded(result, exchangeAddress, tokenId, 800, 5, shareholder, false)
 
       // Buy order
       result = await exchange.addOrder(true, 800, 10,
-        { value: 800*10, from: owner }
+        { value: 800 * 10, from: owner }
       )
       checkOrderAdded(result, exchangeAddress, tokenId, 800, 10, owner, true)
-      checkTradeExecuted(result, exchangeAddress, tokenId, 800, 5, owner, shareholder, true, true)
+      checkTradeExecuted(result, exchangeAddress, tokenId, 800, 5, owner, shareholder, owner)
+      assert.equal((await exchange.feesCredits(owner)).toNumber(), 0)
+      assert.equal((await exchange.bonusFeesCredits(owner)).toNumber(), 0)
+      assert.equal((await exchange.bonusFeesCredits(shareholder)).toNumber(), 40)
+      assert.equal((await exchange.pendingWithdrawals(shareholder)).toNumber(), 800 * 5)
 
       // Check orderbooks
       // buy side
@@ -119,13 +127,17 @@ contract("ERC1155", accounts => {
         { from: shareholder }
       )
       checkOrderAdded(result, exchangeAddress, tokenId, 800, 5, shareholder, false)
-      checkTradeExecuted(result, exchangeAddress, tokenId, 800, 5, owner, shareholder, false, false)
+      checkTradeExecuted(result, exchangeAddress, tokenId, 800, 5, owner, shareholder, shareholder)
 
       result = await exchange.getBestOrder(true)
       checkNullOrder(result)
       result = await exchange.getBestOrder(false)
-      console.log(result);
       checkNullOrder(result)
+    })
+
+    it("Fees credits must be zero", async () => {
+      assert.equal((await exchange.feesCredits(owner)).toNumber(), 0)
+      assert.equal((await exchange.feesCredits(shareholder)).toNumber(), 0)
     })
   })
 })

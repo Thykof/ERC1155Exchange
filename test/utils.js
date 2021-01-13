@@ -33,27 +33,16 @@ const checkTradeExecuted = (
   amount,
   buyer,
   seller,
-  partiallyFilled,
-  buySide
+  taker
 ) => {
-  let event
-
-  event = result.logs.find(l => l.event === 'OrderFilled')
+  let event = result.logs.find(l => l.event === 'TradeExecuted')
   assert.equal(event.args.tokenId.toNumber(), tokenId)
-  assert.equal(event.args.partiallyFilled, partiallyFilled)
-  assert.equal(event.args.buySide, buySide)
   assert.equal(event.args.price.toNumber(), price)
   assert.equal(event.args.amount.toNumber(), amount)
-  assert.equal(event.args.makerAccount, seller)
-  assert.equal(event.args.takerAccount, buyer)
-
-  event = result.logs.find(l => l.event === 'TradeExecuted')
-  assert.equal(event.args.tokenId.toNumber(), tokenId)
-  assert.equal(event.args.buySide, buySide)
-  assert.equal(event.args.amount.toNumber(), amount)
-  assert.equal(event.args.buyerAccount, buyer)
-  assert.equal(event.args.sellerAccount, seller)
-  assert.equal(event.args.pendingWithdrawals.toNumber(), price * amount)
+  assert.equal(event.args.buyer, buyer)
+  assert.equal(event.args.seller, seller)
+  assert.equal(event.args.taker, taker)
+  assert.equal(event.args.paidFees.toNumber(), price * amount * 0.03)
 
   event = result.logs.find(l => l.event === 'TransferSingle')
   assert.equal(event.args.operator, exchangeAddress)
