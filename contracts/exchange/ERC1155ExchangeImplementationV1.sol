@@ -23,7 +23,7 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         address makerAccount;
     }
 
-    uint256 feeRate;
+    uint256 public feeRate;
 
     uint256 public tokenId;
     mapping (address => uint) public pendingWithdrawals;
@@ -48,6 +48,11 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         tokenContract = TradableERC1155Interface(tradableERC1155);
         tokenId = _tokenId;
         feeRate = _feeRate;
+    }
+
+    function setFeeRate(uint256 newFeeRate) public {
+        require(msg.sender == address(tokenContract));
+        feeRate = newFeeRate;
     }
 
     function withdraw() public {
@@ -308,25 +313,7 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
             getWeiPrice(price, amount)
         );
 
-        // Calculate fees
-        uint256 feesUnit = amount.mul(price).mul(feeRate).div(100).div(3);
-        uint256 paidFees = feesUnit.mul(2);
-        bonusFeesCredits[makerAccount] = bonusFeesCredits[makerAccount]
-            .add(feesUnit);
-        if (paidFees == 0) {
-            paidFees = 1;
-        }
-
-        // Pay fees
-        if (bonusFeesCredits[takerAccount] >= paidFees) {
-            bonusFeesCredits[takerAccount] = bonusFeesCredits[takerAccount]
-                .sub(paidFees);
-        } else {
-            feesCredits[takerAccount] = feesCredits[takerAccount].sub(
-                paidFees,
-                "ERC1155Exchange: not enough fee credit"
-            );
-        }
+        uint256 fees = payFees(price, amount, makerAccount, takerAccount);
 
         emit TradeExecuted(
             tokenId,
@@ -335,8 +322,41 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
             buyer,
             seller,
             takerAccount,
-            paidFees
+            fees
         );
+    }
+
+    function payFees(
+        uint256 price,
+        uint256 amount,
+        address makerAccount,
+        address takerAccount
+    )
+        internal
+        returns (uint256)
+    {
+        // Calculate fees
+        uint256 feesUnit = amount.mul(price).mul(feeRate).div(100).div(3);
+        uint256 fees = feesUnit.mul(2);
+        bonusFeesCredits[makerAccount] = bonusFeesCredits[makerAccount]
+            .add(feesUnit);
+        if (fees == 0) {
+            fees = 1;
+        }
+
+        // Pay fees
+        uint256 takenFromBonus = min(fees, bonusFeesCredits[takerAccount]);
+        uint256 remainingFees = fees.sub(takenFromBonus);
+        bonusFeesCredits[takerAccount] = bonusFeesCredits[takerAccount]
+            .sub(takenFromBonus);
+        feesCredits[takerAccount] = feesCredits[takerAccount].sub(
+            remainingFees,
+            "ERC1155Exchange: not enough fee credit"
+        );
+        pendingWithdrawals[address(tokenContract)] = pendingWithdrawals[address(tokenContract)]
+            .add(remainingFees);
+
+        return fees;
     }
 
     function getWeiPrice(
@@ -348,5 +368,13 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         returns (uint256)
     {
         return price * amount;
+    }
+
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a > b) {
+            return b;
+        } else {
+            return a;
+        }
     }
 }
