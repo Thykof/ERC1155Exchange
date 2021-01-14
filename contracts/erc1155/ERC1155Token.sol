@@ -28,13 +28,23 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         public
         onlyOwner
     {
-        upgrade(ProxyAndStorageForERC1155Exchange(tokenIdToProxyExchange[tokenId]), implementation);
+        upgrade(
+            ProxyAndStorageForERC1155Exchange(
+                tokenIdToProxyExchange[tokenId]
+            ),
+            implementation
+        );
     }
 
     function upgradeAll(address implementation) public onlyOwner {
         exchangeImplementationAddress = implementation;
         for (uint256 tokenId = 0; tokenId < tokenIdList.length; tokenId++) {
-            upgrade(ProxyAndStorageForERC1155Exchange(tokenIdToProxyExchange[tokenId]), implementation);
+            upgrade(
+                ProxyAndStorageForERC1155Exchange(
+                    tokenIdToProxyExchange[tokenId]
+                ),
+                implementation
+            );
         }
     }
 
@@ -46,15 +56,26 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         public
         returns (ProxyAndStorageForERC1155Exchange exchange)
     {
-        require(msg.sender == owner(), "ERC1155Token: Sender is not contract owner");
+        require(
+            msg.sender == owner(),
+            "ERC1155Token: Sender is not contract owner"
+        );
         require(tokenId != 0, "ERC1155Token: tokenId can't be zero");
-        require(tokenIdToProxyExchange[tokenId] == address(0), "ERC1155Token: token already created");
+        require(
+            tokenIdToProxyExchange[tokenId] == address(0),
+            "ERC1155Token: token already created"
+        );
 
         _mint(account, tokenId, amount, new bytes(0));
 
         exchange = new ProxyAndStorageForERC1155Exchange(
             exchangeImplementationAddress,
-            abi.encodeWithSignature("initialize(address,uint256,uint256)", address(this), tokenId, 3)
+            abi.encodeWithSignature(
+                "initialize(address,uint256,uint256)",
+                address(this),
+                tokenId,
+                3
+            )
         );
         tokenIdToProxyExchange[tokenId] = address(exchange);
         tokenIdList.push(tokenId);
@@ -71,7 +92,10 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         public
         override
     {
-        require(msg.sender == tokenIdToProxyExchange[tokenId], "ERC1155Token: Bad sender");
+        require(
+            msg.sender == tokenIdToProxyExchange[tokenId],
+            "ERC1155Token: Bad sender"
+        );
 
         safeTransferFrom(seller, buyer, tokenId, amount, new bytes(0));
     }

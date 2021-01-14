@@ -6,8 +6,8 @@ import "./QueueLibrary.sol";
 
 
 library OrderListLibrary {
-    using QueueLibrary for QueueLibrary.Queue;
     using SafeMath for uint256;
+    using QueueLibrary for QueueLibrary.Queue;
 
     struct Order {
         uint256 timestamp;

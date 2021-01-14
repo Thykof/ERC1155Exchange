@@ -8,9 +8,9 @@ import "./QueueLibrary.sol";
 
 
 library OrderBookLibrary {
+    using SafeMath for uint256;
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
     using OrderListLibrary for OrderListLibrary.OrderList;
-    using SafeMath for uint256;
     using QueueLibrary for QueueLibrary.Queue;
 
     struct OrderBook {
