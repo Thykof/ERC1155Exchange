@@ -4,33 +4,27 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./ERC1155ExchangeEvents.sol";
+import "./ERC1155ExchangeOrderBook.sol";
+import "./EtherManager.sol";
 import "../libraries/OrderBookLibrary.sol";
 import "../libraries/OrderListLibrary.sol";
 import "../libraries/BokkyPooBahsRedBlackTreeLibrary.sol";
 import "../erc1155/TradableERC1155Interface.sol";
 
 
-contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable {
+contract ERC1155ExchangeImplementationV1 is
+    EtherManager,
+    ERC1155ExchangeOrderBook,
+    ERC1155ExchangeEvents,
+    Initializable {
     using SafeMath for uint256;
     using OrderBookLibrary for OrderBookLibrary.OrderBook;
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
     using OrderListLibrary for OrderListLibrary.OrderList;
 
-    uint256 public feeRate;
-
     uint256 public tokenId;
-    mapping (address => uint) public pendingWithdrawals;
-    mapping (address => uint) public feesCredits; // deposit and withdrawal allowed
-    mapping (address => uint) public bonusFeesCredits; // no deposit, no withdrawal
-    TradableERC1155Interface public tokenContract;
 
-    OrderBookLibrary.OrderBook internal bids; // buy side
-    OrderBookLibrary.OrderBook internal asks; // sell side
 
-    modifier onlyTokenContract {
-        require(msg.sender == address(tokenContract));
-        _;
-    }
 
     // this function replace the constructor
     function initialize(
@@ -46,91 +40,6 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
         tokenContract = TradableERC1155Interface(tradableERC1155);
         tokenId = _tokenId;
         feeRate = _feeRate;
-    }
-
-    function setFeeRate(uint256 newFeeRate) public onlyTokenContract {
-        feeRate = newFeeRate;
-    }
-
-    function withdraw() public {
-        // See https://docs.soliditylang.org/en/v0.6.2/common-patterns.html
-        uint amount = pendingWithdrawals[msg.sender];
-        // Remember to zero the pending refund before
-        // sending to prevent re-entrancy attacks
-        pendingWithdrawals[msg.sender] = 0;
-        msg.sender.transfer(amount);
-    }
-
-    function depositFeeCredit() public payable {
-        require(msg.value > 0, "ERC1155Exchange: Can't deposit zero");
-        feesCredits[msg.sender] = feesCredits[msg.sender].add(msg.value);
-    }
-
-    function withdrawFeeCredit(uint256 amount) public {
-        feesCredits[msg.sender] = feesCredits[msg.sender].sub(
-            amount,
-            "ERC1155Exchange: withdrawal amount exceed balance"
-        );
-        msg.sender.transfer(amount);
-    }
-
-    function getBestOrder(
-        bool buySide
-    )
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            address
-        )
-    {
-        if (buySide) {
-            return bids.getBestOrder();
-        } else {
-            return asks.getBestOrder();
-        }
-    }
-
-    function getNextPrice(
-        bool buySide,
-        uint256 price
-    )
-        public
-        view
-        returns (
-            uint256
-        )
-    {
-        if (buySide) {
-            return bids.prices.prev(price);
-        } else {
-            return asks.prices.next(price);
-        }
-    }
-
-    function getOrderAtPrice(
-        bool buySide,
-        uint256 price,
-        uint256 index
-    )
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            address
-        )
-    {
-        OrderListLibrary.OrderList storage orderList = asks.pricesToOrderList[price];
-        if (buySide) {
-            orderList = bids.pricesToOrderList[price];
-        }
-
-        uint256 orderCounter = index.add(orderList.firstKey());
-
-        return orderList.get(orderCounter);
     }
 
     function addOrder(
@@ -347,58 +256,5 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
             takerAccount,
             fees
         );
-    }
-
-    function payFees(
-        uint256 price,
-        uint256 amount,
-        address makerAccount,
-        address takerAccount
-    )
-        internal
-        returns (uint256)
-    {
-        // Calculate fees
-        uint256 fees = amount.mul(price).mul(feeRate).div(100);
-        uint256 bonusFees = fees.div(3);
-        bonusFeesCredits[makerAccount] = bonusFeesCredits[makerAccount]
-            .add(bonusFees);
-
-        if (fees == 0) {
-            fees = 1;
-        }
-
-        // Pay fees
-        uint256 takenFromBonus = min(fees, bonusFeesCredits[takerAccount]);
-        uint256 remainingFees = fees.sub(takenFromBonus);
-        bonusFeesCredits[takerAccount] = bonusFeesCredits[takerAccount]
-            .sub(takenFromBonus);
-        feesCredits[takerAccount] = feesCredits[takerAccount].sub(
-            remainingFees,
-            "ERC1155Exchange: not enough fee credit"
-        );
-        pendingWithdrawals[address(tokenContract)] = pendingWithdrawals[address(tokenContract)]
-            .add(remainingFees);
-
-        return fees;
-    }
-
-    function getWeiPrice(
-        uint256 price,
-        uint256 amount
-    )
-        internal
-        pure
-        returns (uint256)
-    {
-        return price * amount;
-    }
-
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a > b) {
-            return b;
-        } else {
-            return a;
-        }
     }
 }
