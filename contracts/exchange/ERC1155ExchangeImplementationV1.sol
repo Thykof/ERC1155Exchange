@@ -11,17 +11,10 @@ import "../erc1155/TradableERC1155Interface.sol";
 
 
 contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable {
-
     using SafeMath for uint256;
     using OrderBookLibrary for OrderBookLibrary.OrderBook;
-    using OrderListLibrary for OrderListLibrary.OrderList;
     using BokkyPooBahsRedBlackTreeLibrary for BokkyPooBahsRedBlackTreeLibrary.Tree;
-
-    struct SimpleOrder {
-        uint256 timestamp;
-        uint256 amount;
-        address makerAccount;
-    }
+    using OrderListLibrary for OrderListLibrary.OrderList;
 
     uint256 public feeRate;
 
@@ -231,7 +224,7 @@ contract ERC1155ExchangeImplementationV1 is ERC1155ExchangeEvents, Initializable
 
         uint256 remainingAmount = requestedAmount; // at the end, we want this to be 0
 
-        SimpleOrder memory currentOrder;
+        OrderListLibrary.Order memory currentOrder;
 
 
         while (remainingAmount > 0 && orderList.exists(orderCounter)) {
