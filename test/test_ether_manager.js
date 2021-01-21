@@ -15,8 +15,8 @@ contract("ERC1155", accounts => {
   const [owner, shareholder] = accounts
   console.log(owner, shareholder) // DEBUG
   let tokenId = 1
-  const price = 700
-  const amount = 25000000
+  let price = 700
+  let amount = 25000000
   let tokens
   let exchange
   let exchangeAddress
@@ -125,6 +125,36 @@ contract("ERC1155", accounts => {
 
       assert.equal((await exchange.bonusFeesCredits(shareholder)).toNumber(), 5000 - 3)
       assert.equal((await exchange.feesCredits(shareholder)).toNumber(), 0)
+    })
+  })
+
+  describe("Ether withdrawal", async () => {
+    before(async () => {
+      tokenId = 4
+      amount = 100000
+      price = 50000000
+      const {logs} = await tokens.newToken(owner, tokenId, amount)
+
+      exchangeAddress = logs.find(l => l.event == "TokenCreated")
+        .args.exchangeAddress
+
+      await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
+      exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
+      await exchange.depositFeeCredit({ value: price * amount / 100 * 3, from: shareholder })
+
+    })
+
+    it("Owner withdraws", async () => {
+      await exchange.addOrder(false, price, amount, { from: owner })
+      await exchange.addOrder(true, price, amount, { value: price * amount, from: shareholder })
+
+      assert.equal((await exchange.pendingWithdrawals(owner)).toNumber(), price * amount)
+
+      let balanceAnte = await web3.eth.getBalance(owner)
+      let result = await exchange.withdraw({ from: owner })
+      let balancePost = await web3.eth.getBalance(owner)
+
+      // assert.isTrue(balancePost > balanceAnte)
     })
   })
 })
