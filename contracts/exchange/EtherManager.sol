@@ -25,7 +25,7 @@ contract EtherManager {
 
     function withdraw() public {
         // See https://docs.soliditylang.org/en/v0.6.2/common-patterns.html
-        uint amount = pendingWithdrawals[msg.sender];
+        uint256 amount = pendingWithdrawals[msg.sender];
         // Remember to zero the pending refund before
         // sending to prevent re-entrancy attacks
         pendingWithdrawals[msg.sender] = 0;

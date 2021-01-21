@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
 
 import "./TradableERC1155InterfaceBase.sol";
 import "../exchange/ProxyAndStorageForERC1155Exchange.sol";
+import "../exchange/IERC1155Exchange.sol";
 
 
 contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
@@ -24,21 +25,21 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         exchangeImplementationAddress = initialImplementation;
     }
 
-    function upgradeOne(address implementation, uint256 tokenId)
+    function upgrade(address implementation, uint256 tokenId, bool all)
         public
         onlyOwner
     {
-        upgrade(
-            ProxyAndStorageForERC1155Exchange(
-                tokenIdToProxyExchange[tokenId]
-            ),
-            implementation
-        );
-    }
-
-    function upgradeAll(address implementation) public onlyOwner {
-        exchangeImplementationAddress = implementation;
-        for (uint256 tokenId = 0; tokenId < tokenIdList.length; tokenId++) {
+        // does this function usefull? TODO: test upgrade directly with contract call
+        if (all == true) {
+            for (uint256 tokenId_ = 0; tokenId_ < tokenIdList.length; tokenId_++) {
+                upgrade(
+                    ProxyAndStorageForERC1155Exchange(
+                        tokenIdToProxyExchange[tokenId_]
+                    ),
+                    implementation
+                );
+            }
+        } else {
             upgrade(
                 ProxyAndStorageForERC1155Exchange(
                     tokenIdToProxyExchange[tokenId]
@@ -81,6 +82,37 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         tokenIdList.push(tokenId);
 
         emit TokenCreated(account, tokenId, amount, address(exchange));
+    }
+
+    function setFeeRate(uint256 tokenId, uint256 newFeeRate, bool all)
+        public
+        onlyOwner
+    {
+        if (all == true) {
+            for (uint256 tokenId_ = 0; tokenId_ < tokenIdList.length; tokenId_++) {
+                IERC1155Exchange(tokenIdToProxyExchange[tokenId_]).setFeeRate(
+                    newFeeRate
+                );
+            }
+        } else {
+            IERC1155Exchange(tokenIdToProxyExchange[tokenId]).setFeeRate(
+                newFeeRate
+            );
+        }
+    }
+
+    function withdrawFeeBalance(uint256 tokenId, bool all) public onlyOwner {
+        if (all == true) {
+            for (uint256 tokenId_ = 0; tokenId_ < tokenIdList.length; tokenId_++) {
+                IERC1155Exchange(
+                    tokenIdToProxyExchange[tokenId_]
+                ).withdrawFeeBalance();
+            }
+        } else {
+            IERC1155Exchange(
+                tokenIdToProxyExchange[tokenId]
+            ).withdrawFeeBalance();
+        }
     }
 
     function executeTrade(
