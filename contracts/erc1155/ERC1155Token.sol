@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
 
 import "./TradableERC1155InterfaceBase.sol";
 import "../exchange/ProxyAndStorageForERC1155Exchange.sol";
-import "../exchange/IERC1155Exchange.sol";
 
 
 contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
@@ -72,47 +71,17 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         exchange = new ProxyAndStorageForERC1155Exchange(
             exchangeImplementationAddress,
             abi.encodeWithSignature(
-                "initialize(address,uint256,uint256)",
+                "initialize(address,uint256,uint256,address)",
                 address(this),
                 tokenId,
-                3
+                3,
+                owner()
             )
         );
         tokenIdToProxyExchange[tokenId] = address(exchange);
         tokenIdList.push(tokenId);
 
         emit TokenCreated(account, tokenId, amount, address(exchange));
-    }
-
-    function setFeeRate(uint256 tokenId, uint256 newFeeRate, bool all)
-        public
-        onlyOwner
-    {
-        if (all == true) {
-            for (uint256 tokenId_ = 0; tokenId_ < tokenIdList.length; tokenId_++) {
-                IERC1155Exchange(tokenIdToProxyExchange[tokenId_]).setFeeRate(
-                    newFeeRate
-                );
-            }
-        } else {
-            IERC1155Exchange(tokenIdToProxyExchange[tokenId]).setFeeRate(
-                newFeeRate
-            );
-        }
-    }
-
-    function withdrawFeeBalance(uint256 tokenId, bool all) public onlyOwner {
-        if (all == true) {
-            for (uint256 tokenId_ = 0; tokenId_ < tokenIdList.length; tokenId_++) {
-                IERC1155Exchange(
-                    tokenIdToProxyExchange[tokenId_]
-                ).withdrawFeeBalance();
-            }
-        } else {
-            IERC1155Exchange(
-                tokenIdToProxyExchange[tokenId]
-            ).withdrawFeeBalance();
-        }
     }
 
     function executeTrade(

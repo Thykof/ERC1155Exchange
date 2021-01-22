@@ -154,7 +154,37 @@ contract("ERC1155", accounts => {
       let result = await exchange.withdraw({ from: owner })
       let balancePost = await web3.eth.getBalance(owner)
 
-      // assert.isTrue(balancePost > balanceAnte)
+      console.log(result.receipt.gasUsed);
+      console.log(balanceAnte);
+      console.log(balancePost);
+      assert.isTrue(balancePost > balanceAnte)
+    })
+  })
+
+  describe("Fee rate", async () => {
+    before(async () => {
+      tokenId = 5
+      const {logs} = await tokens.newToken(owner, tokenId, amount)
+
+      exchangeAddress = logs.find(l => l.event == "TokenCreated")
+        .args.exchangeAddress
+
+      await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
+      exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
+      await exchange.depositFeeCredit({ value: price * amount / 100 * 3, from: shareholder })
+
+    })
+
+    it("Set new fee rate", async () => {
+      await exchange.setFeeRate(9, { from: owner })
+      assert.equal((await exchange.feeRate()).toNumber(), 9)
+    })
+
+    it("Must revert if caller is not operator", async () => {
+      await truffleAssert.reverts(
+        exchange.setFeeRate(12, { from: shareholder }),
+        'ERC1155Exchange: caller is not operator'
+      )
     })
   })
 })

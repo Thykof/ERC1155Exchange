@@ -17,7 +17,5 @@ contract ProxyAndStorageForERC1155Exchange is TransparentUpgradeableProxy,
             msg.sender,
             _data
         )
-    {
-        // Is this realy necessary?
-    }
+    {}
 }

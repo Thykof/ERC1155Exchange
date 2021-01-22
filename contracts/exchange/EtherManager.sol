@@ -8,6 +8,7 @@ import "../erc1155/TradableERC1155Interface.sol";
 contract EtherManager {
     using SafeMath for uint256;
 
+    address internal operator;
     TradableERC1155Interface public tokenContract;
     uint256 public feeRate;
     mapping (address => uint) public pendingWithdrawals;
@@ -19,7 +20,7 @@ contract EtherManager {
     mapping (address => uint) public bonusFeesCredits;
 
     function setFeeRate(uint256 newFeeRate) public {
-        require(msg.sender == address(tokenContract));
+        require(msg.sender == operator, "ERC1155Exchange: caller is not operator");
         feeRate = newFeeRate;
     }
 
@@ -29,7 +30,7 @@ contract EtherManager {
         // Remember to zero the pending refund before
         // sending to prevent re-entrancy attacks
         pendingWithdrawals[msg.sender] = 0;
-        msg.sender.transfer(amount);
+        payable(msg.sender).transfer(amount);
     }
 
     function depositFeeCredit() public payable {

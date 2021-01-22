@@ -24,13 +24,12 @@ contract ERC1155ExchangeImplementationV1 is
 
     uint256 public tokenId;
 
-
-
     // this function replace the constructor
     function initialize(
         address tradableERC1155,
         uint256 _tokenId,
-        uint256 _feeRate
+        uint256 _feeRate,
+        address _operator
     )
         public
         initializer
@@ -40,6 +39,7 @@ contract ERC1155ExchangeImplementationV1 is
         tokenContract = TradableERC1155Interface(tradableERC1155);
         tokenId = _tokenId;
         feeRate = _feeRate;
+        operator = _operator;
     }
 
     function addOrder(
