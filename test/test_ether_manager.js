@@ -4,8 +4,6 @@ const Web3 = require('web3')
 
 const web3 = new Web3(Web3.givenProvider)
 
-const { checkNullOrder, checkOrderAdded, checkTradeExecuted } = require('./utils')
-
 const ERC1155Token = artifacts.require('ERC1155Token')
 const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForERC1155Exchange')
 const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplementationV1')

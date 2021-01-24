@@ -1,6 +1,7 @@
 pragma solidity 0.6.2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/Math.sol";
 
 import "../erc1155/TradableERC1155Interface.sol";
 
@@ -66,7 +67,7 @@ contract EtherManager {
         }
 
         // Pay fees
-        uint256 takenFromBonus = min(fees, bonusFeesCredits[takerAccount]);
+        uint256 takenFromBonus = Math.min(fees, bonusFeesCredits[takerAccount]);
         uint256 remainingFees = fees.sub(takenFromBonus);
         bonusFeesCredits[takerAccount] = bonusFeesCredits[takerAccount]
             .sub(takenFromBonus);
@@ -90,13 +91,5 @@ contract EtherManager {
         returns (uint256)
     {
         return price * amount;
-    }
-
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a > b) {
-            return b;
-        } else {
-            return a;
-        }
     }
 }
