@@ -1,4 +1,6 @@
 build/*
+artifacts/*
+cache
 **.log
 node_modules
 coverage
