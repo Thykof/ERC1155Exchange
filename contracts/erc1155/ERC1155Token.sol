@@ -16,7 +16,7 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         address exchangeAddress
     );
 
-    mapping(uint256 => address payable) private tokenIdToProxyExchange;
+    mapping(uint256 => address payable) public tokenIdToProxyExchange;
     uint256[] private tokenIdList;
     address private exchangeImplementationAddress;
 

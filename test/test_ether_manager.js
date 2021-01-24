@@ -141,7 +141,6 @@ contract("ERC1155", accounts => {
       await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
       exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
       await exchange.depositFeeCredit({ value: price * amount / 100 * 3, from: shareholder })
-
     })
 
     it("Owner withdraws", async () => {
