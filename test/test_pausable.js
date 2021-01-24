@@ -40,5 +40,26 @@ contract("ERC1155", accounts => {
     it("Check if paused", async () => {
       assert.equal(await tokens.paused(), true)
     })
+
+    it("Can't create token", async () => {
+      await truffleAssert.reverts(
+        tokens.newToken(owner, 2, 10),
+        "Pausable: paused"
+      )
+    })
+
+    it("Can't add order", async () => {
+      await truffleAssert.reverts(
+        exchange.addOrder(false, price, 10),
+        "ERC1155Exchange: ERC1155 is paused"
+      )
+    })
+
+    it("Can't transfert token", async () => {
+      await truffleAssert.reverts(
+        tokens.safeTransferFrom(owner, shareholder, tokenId, 1, 0),
+        "ERC1155Pausable: token transfer while paused"
+      )
+    })
   })
 })
