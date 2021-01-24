@@ -113,10 +113,10 @@ contract("ERC1155", accounts => {
       // Check orderbooks
       // buy side
       result = await exchange.getBestOrder(true)
-      assert.notEqual(result['0'].toNumber(), 0)
-      assert.equal(result['1'].toNumber(), 800)
-      assert.equal(result['2'].toNumber(), 5)
-      assert.equal(result['3'], owner)
+      assert.notEqual(result.timestamp.toNumber(), 0)
+      assert.equal(result.bestPrice.toNumber(), 800)
+      assert.equal(result.amount.toNumber(), 5)
+      assert.equal(result.makerAccount, owner)
 
       // Sell side
       result = await exchange.getBestOrder(false)

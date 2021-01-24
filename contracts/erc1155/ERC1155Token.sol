@@ -95,7 +95,7 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
     {
         require(
             msg.sender == tokenIdToProxyExchange[tokenId],
-            "ERC1155Token: Bad sender"
+            "ERC1155Token: Bad caller"
         );
 
         safeTransferFrom(seller, buyer, tokenId, amount, new bytes(0));

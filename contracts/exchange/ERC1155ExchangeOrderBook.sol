@@ -22,10 +22,10 @@ contract ERC1155ExchangeOrderBook {
         public
         view
         returns (
-            uint256,
-            uint256,
-            uint256,
-            address
+            uint256 timestamp,
+            uint256 bestPrice,
+            uint256 amount,
+            address makerAccount
         )
     {
         if (buySide) {
@@ -35,45 +35,46 @@ contract ERC1155ExchangeOrderBook {
         }
     }
 
-    function getNextPrice(
-        bool buySide,
-        uint256 price
-    )
-        public
-        view
-        returns (
-            uint256
-        )
-    {
-        if (buySide) {
-            return bids.prices.prev(price);
-        } else {
-            return asks.prices.next(price);
-        }
-    }
-
-    function getOrderAtPrice(
-        bool buySide,
-        uint256 price,
-        uint256 index
-    )
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            address
-        )
-    {
-        OrderListLibrary.OrderList storage orderList = asks
-            .pricesToOrderList[price];
-
-        if (buySide) {
-            orderList = bids.pricesToOrderList[price];
-        }
-
-        uint256 orderCounter = index.add(orderList.firstKey());
-
-        return orderList.get(orderCounter);
-    }
+    // may be used one day for market order
+    // function getNextPrice(
+    //     bool buySide,
+    //     uint256 price
+    // )
+    //     public
+    //     view
+    //     returns (
+    //         uint256
+    //     )
+    // {
+    //     if (buySide) {
+    //         return bids.prices.prev(price);
+    //     } else {
+    //         return asks.prices.next(price);
+    //     }
+    // }
+    //
+    // function getOrderAtPrice(
+    //     bool buySide,
+    //     uint256 price,
+    //     uint256 index
+    // )
+    //     public
+    //     view
+    //     returns (
+    //         uint256,
+    //         uint256,
+    //         address
+    //     )
+    // {
+    //     OrderListLibrary.OrderList storage orderList = asks
+    //         .pricesToOrderList[price];
+    //
+    //     if (buySide) {
+    //         orderList = bids.pricesToOrderList[price];
+    //     }
+    //
+    //     uint256 orderCounter = index.add(orderList.firstKey());
+    //
+    //     return orderList.get(orderCounter);
+    // }
 }
