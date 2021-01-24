@@ -1,4 +1,6 @@
-# POC red-black binary tree scalability
+# ERC1155 Exchange
+
+## Dev
 
 	npx nodemon --watch contracts --ext sol --exec npm run compile
 
@@ -8,17 +10,13 @@
 
 	node src/sripts.js
 
-## Linked list
+### Ressources
 
-Circular Double Linked List Index Library
-https://github.com/o0ragman0o/LibCLL/blob/master/LibCLL.sol
-
-Linked List (double)
-https://github.com/o0ragman0o/LibCLL/blob/master/LibCLL.sol
-
-Queue FIFO
+Queue FIFO:
 https://programtheblockchain.com/posts/2018/03/23/storage-patterns-stacks-queues-and-deques/
 
-## Ressources
-
 https://medium.com/coinmonks/ethereum-solidity-memory-vs-storage-which-to-use-in-local-functions-72b593c3703a
+
+## TODO
+
+ - https://docs.soliditylang.org/en/v0.8.0/security-considerations.html#restrict-the-amount-of-ether	
