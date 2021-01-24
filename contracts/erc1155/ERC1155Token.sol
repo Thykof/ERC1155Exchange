@@ -24,30 +24,6 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         exchangeImplementationAddress = initialImplementation;
     }
 
-    function upgrade(address implementation, uint256 tokenId, bool all)
-        public
-        onlyOwner
-    {
-        // does this function usefull? TODO: test upgrade directly with contract call
-        if (all == true) {
-            for (uint256 tokenId_ = 0; tokenId_ < tokenIdList.length; tokenId_++) {
-                upgrade(
-                    ProxyAndStorageForERC1155Exchange(
-                        tokenIdToProxyExchange[tokenId_]
-                    ),
-                    implementation
-                );
-            }
-        } else {
-            upgrade(
-                ProxyAndStorageForERC1155Exchange(
-                    tokenIdToProxyExchange[tokenId]
-                ),
-                implementation
-            );
-        }
-    }
-
     function newToken(
         address account,
         uint256 tokenId,
