@@ -1,13 +1,14 @@
 pragma solidity 0.6.2;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155Pausable.sol";
 import "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
 
 import "./TradableERC1155InterfaceBase.sol";
 import "../exchange/ProxyAndStorageForERC1155Exchange.sol";
 
 
-contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
+contract ERC1155Token is ERC1155Pausable, ProxyAdmin, TradableERC1155InterfaceBase {
 
     event TokenCreated(
         address account,
@@ -20,8 +21,16 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
     uint256[] private tokenIdList;
     address private exchangeImplementationAddress;
 
-    constructor(address initialImplementation) public {
+    constructor(address initialImplementation) public ERC1155("") {
         exchangeImplementationAddress = initialImplementation;
+    }
+
+    function setPause(bool paused) public onlyOwner {
+        if (paused) {
+            _pause();
+        } else {
+            _unpause();
+        }
     }
 
     function newToken(
@@ -30,6 +39,7 @@ contract ERC1155Token is ERC1155(""), ProxyAdmin, TradableERC1155InterfaceBase {
         uint256 amount
     )
         public
+        whenNotPaused
         returns (ProxyAndStorageForERC1155Exchange exchange)
     {
         require(

@@ -51,6 +51,7 @@ contract ERC1155ExchangeImplementationV1 is
         payable
     {
         require(amount > 0, "ERC1155Exchange: amount must be over zero");
+        require(!tokenContract.paused(), "ERC1155Exchange: ERC1155 is paused");
 
         uint256 incommingOrderCounter;
         address makerAccount = msg.sender;
