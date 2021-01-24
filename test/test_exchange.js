@@ -140,4 +140,43 @@ contract("ERC1155", accounts => {
       assert.equal((await exchange.feesCredits(shareholder)).toNumber(), 0)
     })
   })
+
+  describe("2nd order on same price", async () => {
+    before(async () => {
+      tokenId = 601
+      const {logs} = await tokens.newToken(owner, tokenId, 300)
+
+      exchangeAddress = logs.find(l => l.event == "TokenCreated")
+        .args.exchangeAddress
+      await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
+      exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
+      await exchange.depositFeeCredit({ value: 10000, from: shareholder })
+    })
+
+    it("Add 2 orders with same price and fill them", async () => {
+      await exchange.addOrder(false, price, 3, { from: owner })
+      await exchange.addOrder(false, price, 7, { from: owner })
+
+      let result = await exchange.addOrder(true, price, 9, { value: price * 9, from: shareholder })
+      // console.log(result.logs);
+      checkOrderAdded(result, exchangeAddress, tokenId, price, 9, shareholder, true)
+      checkTradeExecuted(result, exchangeAddress, tokenId, price, 3, shareholder, owner, shareholder)
+      checkTradeExecuted(result, exchangeAddress, tokenId, price, 6, shareholder, owner, shareholder)
+    })
+
+    it("2nd Order must be partially fillder", async () => {
+      let result
+
+      // bids orderbook is empty
+      result = await exchange.getBestOrder(true)
+      checkNullOrder(result)
+
+      // asks: amount of 1 remaining
+      result = await exchange.getBestOrder(false)
+      assert.notEqual(result.timestamp.toNumber(), 0)
+      assert.equal(result.bestPrice.toNumber(), price)
+      assert.equal(result.amount.toNumber(), 1)
+      assert.equal(result.makerAccount, owner)
+    })
+  })
 })
