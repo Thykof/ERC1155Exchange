@@ -61,5 +61,17 @@ contract("ERC1155", accounts => {
         "ERC1155Pausable: token transfer while paused"
       )
     })
+
+    it("User can't unpause", async () => {
+      await truffleAssert.reverts(
+        tokens.setPause(false, { from: shareholder }),
+        "Ownable: caller is not the owner"
+      )
+    })
+
+    it("Owner unpause", async () => {
+      await tokens.setPause(false, { from: owner }),
+      assert.equal(await tokens.paused(), false)
+    })
   })
 })
