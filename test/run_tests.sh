@@ -1,8 +1,8 @@
-if [ $1 == "cov" ];
+if [ $1 == "cov" ]
 then
   npm run coverage
 else
-  npm run test
+  npm run test $2
 fi
 
 if [ $? -eq 0 ]

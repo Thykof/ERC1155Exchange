@@ -15,6 +15,7 @@
 
 	# run test coverage and say result
 	./test/run_test.sh cov
+	./test/run_test.sh test ./test/test_ether_manager.js
 
 ### Ressources
 
