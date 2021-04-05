@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./ERC1155ExchangeEvents.sol";
 import "./ERC1155ExchangeOrderBook.sol";
-import "./payment/EtherManager.sol";
+import "./EtherManager.sol";
 import "../libraries/OrderBookLibrary.sol";
 import "../libraries/OrderListLibrary.sol";
 import "../libraries/BokkyPooBahsRedBlackTreeLibrary.sol";
@@ -40,12 +40,6 @@ contract ERC1155ExchangeImplementationV1 is
         tokenId = _tokenId;
         feeRate = _feeRate;
         operator = _operator;
-
-        // EtherManager
-        initializeEtherManager();
-
-        // ReentrancyGuard
-        initializeReentrancyGuardInternal();
     }
 
     function addOrder(
@@ -247,7 +241,10 @@ contract ERC1155ExchangeImplementationV1 is
             amount
         );
 
-        escrow.deposit{ value: getWeiPrice(price, amount) }(seller);
+        // Add withdrawal for seller
+        pendingWithdrawals[seller] = pendingWithdrawals[seller].add(
+            getWeiPrice(price, amount)
+        );
 
         uint256 fees = payFees(price, amount, makerAccount, takerAccount);
 

@@ -7,8 +7,6 @@ const web3 = new Web3(Web3.givenProvider)
 const ERC1155Token = artifacts.require('ERC1155Token')
 const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForERC1155Exchange')
 const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplementationV1')
-const EscrowPayable = artifacts.require('EscrowPayable')
-const Escrow = artifacts.require('Escrow')
 
 contract("ERC1155", accounts => {
 
@@ -20,9 +18,6 @@ contract("ERC1155", accounts => {
   let tokens
   let exchange
   let exchangeAddress
-  let escrow
-  let escrowFee
-  let escrowFeeBonus
 
   before(async () => {
     implementation = await ERC1155ExchangeImplementationV1.new()
@@ -36,15 +31,12 @@ contract("ERC1155", accounts => {
       exchangeAddress = logs.find(l => l.event == "TokenCreated")
         .args.exchangeAddress
       exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
-      escrow = await Escrow.at(await exchange.escrow())
-      escrowFee = await EscrowPayable.at(await exchange.escrowFeeCredit())
-      escrowFeeBonus = await EscrowPayable.at(await exchange.escrowBonusFeeCredit())
     })
 
     it("depositFeeCredit", async () => {
       await exchange.depositFeeCredit({ value: amount, from: shareholder })
 
-      assert.equal((await escrowFee.depositsOf(shareholder)).toNumber(), amount)
+      assert.equal((await exchange.feesCredits(shareholder)).toNumber(), amount)
 
       await truffleAssert.reverts(
         exchange.depositFeeCredit({ value: 0, from: shareholder }),
@@ -55,7 +47,7 @@ contract("ERC1155", accounts => {
     it("withdrawFeeCredit", async () => {
       let balanceAnte = new BigNumber(await web3.eth.getBalance(shareholder))
 
-      let result = await exchange.withdrawFeeCredit({ from: shareholder })
+      let result = await exchange.withdrawFeeCredit(amount, { from: shareholder })
 
       let balancePost = new BigNumber(await web3.eth.getBalance(shareholder))
       let expected = balanceAnte.minus(new BigNumber(result.receipt.gasUsed)).plus(new BigNumber(amount))
@@ -111,7 +103,7 @@ contract("ERC1155", accounts => {
     })
 
     it("Shareholder has paid fees", async () => {
-      assert.equal((await escrowFee.depositsOf(shareholder)).toNumber(), 0)
+      assert.equal((await exchange.feesCredits(shareholder)).toNumber(), 0)
     })
 
     it("Owner use its fee bonus and fee credit", async () => {
@@ -119,18 +111,18 @@ contract("ERC1155", accounts => {
       await exchange.depositFeeCredit({ value: 10000, from: owner })
       await exchange.addOrder(true, 5000, 100, { value: 5000 * 100, from: owner })
 
-      assert.equal((await escrowFeeBonus.depositsOf(owner)).toNumber(), 0)
-      assert.equal((await escrowFee.depositsOf(owner)).toNumber(), 0)
+      assert.equal((await exchange.bonusFeesCredits(owner)).toNumber(), 0)
+      assert.equal((await exchange.feesCredits(owner)).toNumber(), 0)
 
-      assert.equal((await escrowFeeBonus.depositsOf(shareholder)).toNumber(), 5000)
+      assert.equal((await exchange.bonusFeesCredits(shareholder)).toNumber(), 5000)
     })
 
     it("Only use its fee bonus", async () => {
       await exchange.addOrder(false, 1, 100, { from: owner })
       await exchange.addOrder(true, 1, 100, { value: 1 * 100, from: shareholder })
 
-      assert.equal((await escrowFeeBonus.depositsOf(shareholder)).toNumber(), 5000 - 3)
-      assert.equal((await escrowFee.depositsOf(shareholder)).toNumber(), 0)
+      assert.equal((await exchange.bonusFeesCredits(shareholder)).toNumber(), 5000 - 3)
+      assert.equal((await exchange.feesCredits(shareholder)).toNumber(), 0)
     })
   })
 
