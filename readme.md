@@ -10,6 +10,12 @@
 
 	node src/sripts.js
 
+	# run tests and say result
+	./test/run_test.sh
+
+	# run test coverage and say result
+	./test/run_test.sh cov
+
 ### Ressources
 
 Queue FIFO:

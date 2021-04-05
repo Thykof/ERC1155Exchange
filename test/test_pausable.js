@@ -10,7 +10,6 @@ const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplem
 contract("ERC1155", accounts => {
 
   const [owner, shareholder] = accounts
-  console.log(owner, shareholder) // DEBUG
   let tokenId = 1
   let price = 700
   let amount = 25000000

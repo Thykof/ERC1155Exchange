@@ -1,4 +1,9 @@
-truffle test
+if [ $1 == "cov" ];
+then
+  npm run coverage
+else
+  npm run test
+fi
 
 if [ $? -eq 0 ]
 then

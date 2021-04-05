@@ -15,7 +15,6 @@ contract("ERC1155", accounts => {
 
   let tokenId = 1
   const [owner, shareholder] = accounts
-  console.log("owner and shareholder: ", owner, shareholder);
   let proxyExchangeAddress
   let token
   let implementation

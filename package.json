@@ -11,7 +11,8 @@
     "compile": "truffle compile",
     "deploy": "truffle deploy",
     "test": "truffle test",
-    "coverage": "truffle run coverage"
+    "coverage": "truffle run coverage",
+    "contract-size": "truffle run contract-size"
   },
   "author": "",
   "license": "ISC",
