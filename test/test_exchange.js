@@ -5,6 +5,8 @@ const { checkNullOrder, checkOrderAdded, checkTradeExecuted } = require('./utils
 const ERC1155Token = artifacts.require('ERC1155Token')
 const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForERC1155Exchange')
 const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplementationV1')
+const EscrowPayable = artifacts.require('EscrowPayable')
+const Escrow = artifacts.require('Escrow')
 
 contract("ERC1155", accounts => {
 
@@ -15,6 +17,9 @@ contract("ERC1155", accounts => {
   let tokens
   let exchange
   let exchangeAddress
+  let escrow
+  let escrowFee
+  let escrowFeeBonus
 
   before(async () => {
     implementation = await ERC1155ExchangeImplementationV1.new()
@@ -29,6 +34,10 @@ contract("ERC1155", accounts => {
         .args.exchangeAddress
       await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
       exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
+      escrow = await Escrow.at(await exchange.escrow())
+      escrowFee = await EscrowPayable.at(await exchange.escrowFeeCredit())
+      escrowFeeBonus = await EscrowPayable.at(await exchange.escrowBonusFeeCredit())
+
       await exchange.depositFeeCredit({ value: 42, from: shareholder })
       await exchange.addOrder(false, price, 10, { from: owner })
     })
@@ -46,7 +55,7 @@ contract("ERC1155", accounts => {
       checkOrderAdded(result, exchangeAddress, tokenId, price, amount, shareholder, true)
       checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, shareholder, owner, shareholder)
 
-      assert.equal(await exchange.pendingWithdrawals(owner), price * amount)
+      assert.equal(await escrow.depositsOf(owner), price * amount)
     })
 
   })
@@ -63,6 +72,9 @@ contract("ERC1155", accounts => {
       await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
       await tokens.setApprovalForAll(exchangeAddress, true, { from: shareholder })
       exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
+      escrow = await Escrow.at(await exchange.escrow())
+      escrowFee = await EscrowPayable.at(await exchange.escrowFeeCredit())
+      escrowFeeBonus = await EscrowPayable.at(await exchange.escrowBonusFeeCredit())
       await exchange.depositFeeCredit({ value: 50, from: owner })
       await exchange.depositFeeCredit({ value: 290, from: shareholder })
       await exchange.addOrder(false, price, amount, { from: owner })
@@ -77,7 +89,7 @@ contract("ERC1155", accounts => {
       checkOrderAdded(result, exchangeAddress, tokenId, price, amount, shareholder, true)
       checkTradeExecuted(result, exchangeAddress, tokenId, price, amount, shareholder, owner, shareholder)
 
-      assert.equal(await exchange.pendingWithdrawals(owner), price * amount)
+      assert.equal(await escrow.depositsOf(owner), price * amount)
     })
 
     it("Orderbooks must be empty", async () => {
@@ -88,8 +100,8 @@ contract("ERC1155", accounts => {
     })
 
     it("Check fees credit", async () => {
-      assert.equal((await exchange.feesCredits(shareholder)).toNumber(), 80)
-      assert.equal((await exchange.bonusFeesCredits(owner)).toNumber(), 70)
+      assert.equal((await escrowFee.depositsOf(shareholder)).toNumber(), 80)
+      assert.equal((await escrowFeeBonus.depositsOf(owner)).toNumber(), 70)
     })
 
     it("Order: sell 5", async () => {
@@ -105,10 +117,10 @@ contract("ERC1155", accounts => {
       )
       checkOrderAdded(result, exchangeAddress, tokenId, 800, 10, owner, true)
       checkTradeExecuted(result, exchangeAddress, tokenId, 800, 5, owner, shareholder, owner)
-      assert.equal((await exchange.feesCredits(owner)).toNumber(), 0)
-      assert.equal((await exchange.bonusFeesCredits(owner)).toNumber(), 0)
-      assert.equal((await exchange.bonusFeesCredits(shareholder)).toNumber(), 40)
-      assert.equal((await exchange.pendingWithdrawals(shareholder)).toNumber(), 800 * 5)
+      assert.equal((await escrowFee.depositsOf(owner)).toNumber(), 0)
+      assert.equal((await escrowFeeBonus.depositsOf(owner)).toNumber(), 0)
+      assert.equal((await escrowFeeBonus.depositsOf(shareholder)).toNumber(), 40)
+      assert.equal((await escrow.depositsOf(shareholder)).toNumber(), 800 * 5)
 
       // Check orderbooks
       // buy side
@@ -136,8 +148,8 @@ contract("ERC1155", accounts => {
     })
 
     it("Fees credits must be zero", async () => {
-      assert.equal((await exchange.feesCredits(owner)).toNumber(), 0)
-      assert.equal((await exchange.feesCredits(shareholder)).toNumber(), 0)
+      assert.equal((await escrowFee.depositsOf(owner)).toNumber(), 0)
+      assert.equal((await escrowFee.depositsOf(shareholder)).toNumber(), 0)
     })
   })
 
@@ -150,6 +162,9 @@ contract("ERC1155", accounts => {
         .args.exchangeAddress
       await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
       exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
+      escrow = await Escrow.at(await exchange.escrow())
+      escrowFee = await EscrowPayable.at(await exchange.escrowFeeCredit())
+      escrowFeeBonus = await EscrowPayable.at(await exchange.escrowBonusFeeCredit())
       await exchange.depositFeeCredit({ value: 10000, from: shareholder })
     })
 

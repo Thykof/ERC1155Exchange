@@ -24,4 +24,6 @@ contract ERC1155ExchangeEvents {
         address taker,
         uint256 paidFees
     );
+
+    event Deposited(address indexed payee, uint256 weiAmount);
 }
