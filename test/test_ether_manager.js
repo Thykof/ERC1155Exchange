@@ -1,4 +1,3 @@
-const BigNumber = require('bignumber.js');
 const truffleAssert = require('truffle-assertions')
 const Web3 = require('web3')
 
@@ -44,14 +43,19 @@ contract("ERC1155", accounts => {
     })
 
     it("withdrawFeeCredit", async () => {
-      let balanceAnte = new BigNumber(await web3.eth.getBalance(shareholder))
+      let balanceBefore = web3.utils.toBN(await web3.eth.getBalance(shareholder))
 
-      let result = await exchange.withdrawFeeCredit(amount, { from: shareholder })
+      let gasUsed = web3.utils.toBN((
+        await exchange.withdrawFeeCredit(amount, { from: shareholder })
+      ).receipt.gasUsed);
 
-      let balancePost = new BigNumber(await web3.eth.getBalance(shareholder))
-      let expected = balanceAnte.minus(new BigNumber(result.receipt.gasUsed)).plus(new BigNumber(amount))
-      // equality test fail, I don't know why
-      assert.isTrue(balanceAnte.lt(expected))
+      let balanceAfter = web3.utils.toBN(await web3.eth.getBalance(shareholder))
+
+      let gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
+      let gasSpend = gasUsed.mul(gasPrice)
+      let expectedBalance = balanceBefore.sub(web3.utils.toBN(gasSpend)).add(web3.utils.toBN(amount))
+
+      assert.isTrue(balanceAfter.eq(expectedBalance))
     })
   })
 
@@ -141,19 +145,27 @@ contract("ERC1155", accounts => {
     })
 
     it("Owner withdraws", async () => {
-      await exchange.addOrder(false, price, amount, { from: owner })
-      await exchange.addOrder(true, price, amount, { value: price * amount, from: shareholder })
+      await exchange.addOrder(false, price, amount, { from: owner }) // owner place sell order
+      await exchange.addOrder(true, price, amount, { value: price * amount, from: shareholder }) // shareholder buy
 
-      assert.equal((await exchange.pendingWithdrawals(owner)).toNumber(), price * amount)
+      let actualPendingWithdrawals = web3.utils.toBN((await exchange.pendingWithdrawals(owner)))
+      let expectedPendingWithdrawals = web3.utils.toBN(price).mul(web3.utils.toBN(amount))
+      assert.isTrue(
+        actualPendingWithdrawals.eq(expectedPendingWithdrawals),
+        'check pending withdrawals (equality)'
+      )
 
-      let balanceAnte = await web3.eth.getBalance(owner)
-      let result = await exchange.withdraw({ from: owner })
-      let balancePost = await web3.eth.getBalance(owner)
+      let gasPrice = web3.utils.toBN(await web3.eth.getGasPrice())
 
-      console.log(result.receipt.gasUsed);
-      console.log(balanceAnte);
-      console.log(balancePost);
-      assert.isTrue(balancePost > balanceAnte)
+      let balanceBefore = web3.utils.toBN((await web3.eth.getBalance(owner)));
+      let gasUsed = web3.utils.toBN((await exchange.withdraw({ from: owner })).receipt.gasUsed);
+      let balanceAfter = web3.utils.toBN((await web3.eth.getBalance(owner)));
+      let gasSpend = gasUsed.mul(gasPrice)
+      let expectedBalance = balanceBefore.sub(gasSpend).add(expectedPendingWithdrawals)
+      assert.isTrue(
+        balanceAfter.eq(expectedBalance),
+        'check balances (equality)'
+      )
     })
   })
 
