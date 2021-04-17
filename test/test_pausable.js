@@ -14,17 +14,10 @@ contract("ERC1155 Pausable", accounts => {
   let price = 700
   let amount = 25000000
   let tokens
-  let exchange
-  let exchangeAddress
 
   before(async () => {
     implementation = await ERC1155ExchangeImplementationV1.new()
     tokens = await TradableERC1155Token.new(implementation.address)
-    const {logs} = await tokens.newToken(owner, tokenId, 1)
-    exchangeAddress = logs.find(l => l.event == "TokenCreated")
-    .args.exchangeAddress
-    await tokens.setApprovalForAll(exchangeAddress, true, { from: owner })
-    exchange = await ERC1155ExchangeImplementationV1.at(exchangeAddress)
   })
 
   it("Initially not paused", async () => {
@@ -44,13 +37,6 @@ contract("ERC1155 Pausable", accounts => {
       await truffleAssert.reverts(
         tokens.newToken(owner, 2, 10),
         "Pausable: paused"
-      )
-    })
-
-    it("Can't add order", async () => {
-      await truffleAssert.reverts(
-        exchange.addOrder(false, price, 10),
-        "ERC1155Exchange: ERC1155 is paused"
       )
     })
 
