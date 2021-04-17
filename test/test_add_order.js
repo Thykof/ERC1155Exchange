@@ -52,13 +52,13 @@ contract("ERC1155", accounts => {
       await truffleAssert.reverts(
         exchange.addOrder(true, price, amount,
           { value: 0, from: shareholder }),
-        'ERC1155Exchange: not enough wei sent'
+        'ERC1155Exchange: invalid amount wei sent'
       )
 
       await truffleAssert.reverts(
         exchange.addOrder(true, price, amount,
           { value: 699, from: shareholder }),
-        'ERC1155Exchange: not enough wei sent'
+        'ERC1155Exchange: invalid amount wei sent'
       )
 
       await exchange.addOrder(false, 10, 1,

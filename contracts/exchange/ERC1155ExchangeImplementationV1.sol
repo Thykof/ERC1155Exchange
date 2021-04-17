@@ -61,7 +61,7 @@ contract ERC1155ExchangeImplementationV1 is
             // Check ether value sent
             require(
                 msg.value == getWeiPrice(price, amount),
-                "ERC1155Exchange: not enough wei sent"
+                "ERC1155Exchange: invalid amount wei sent"
             );
             incommingOrderCounter = bids.addOrder(price, amount, makerAccount);
         } else {
