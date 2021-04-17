@@ -42,12 +42,5 @@ contract("ERC1155", accounts => {
         "ERC1155Token: token already created"
       )
     })
-
-    it("Only exchange can do a trade", async () => {
-      await truffleAssert.reverts(
-        tokens.executeTrade(1, shareholder, owner, 3, { from: shareholder }),
-        "ERC1155Token: Bad caller"
-      )
-    })
   })
 })

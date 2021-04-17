@@ -4,11 +4,11 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155Pausable.sol";
 import "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
 
-import "./TradableERC1155InterfaceBase.sol";
+import "./TradableERC1155Interface.sol";
 import "../exchange/ProxyAndStorageForERC1155Exchange.sol";
 
 
-contract ERC1155Token is ERC1155Pausable, ProxyAdmin, TradableERC1155InterfaceBase {
+contract ERC1155Token is ERC1155Pausable, ProxyAdmin {
 
     event TokenCreated(
         address account,
@@ -68,22 +68,5 @@ contract ERC1155Token is ERC1155Pausable, ProxyAdmin, TradableERC1155InterfaceBa
         tokenIdList.push(tokenId);
 
         emit TokenCreated(account, tokenId, amount, address(exchange));
-    }
-
-    function executeTrade(
-        uint256 tokenId,
-        address buyer,
-        address seller,
-        uint256 amount
-    )
-        public
-        override
-    {
-        require(
-            msg.sender == tokenIdToProxyExchange[tokenId],
-            "ERC1155Token: Bad caller"
-        );
-
-        safeTransferFrom(seller, buyer, tokenId, amount, new bytes(0));
     }
 }

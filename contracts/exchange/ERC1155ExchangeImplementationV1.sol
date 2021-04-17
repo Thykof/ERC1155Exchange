@@ -234,11 +234,12 @@ contract ERC1155ExchangeImplementationV1 is
             seller = takerAccount;
         }
 
-        tokenContract.executeTrade(
-            tokenId,
-            buyer,
+        tokenContract.safeTransferFrom(
             seller,
-            amount
+            buyer,
+            tokenId,
+            amount,
+            new bytes(0)
         );
 
         // Add withdrawal for seller
