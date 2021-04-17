@@ -1,7 +1,7 @@
 {
-  "name": "abrb",
+  "name": "ERC1155Exchange",
   "version": "1.0.0",
-  "description": "npx ganache-cli -m annual immense okay want split empty total tag view media debris barely",
+  "description": "",
   "main": "truffle-config.js",
   "directories": {
     "test": "test"
@@ -14,7 +14,7 @@
     "coverage": "truffle run coverage",
     "contract-size": "truffle compile && truffle run contract-size"
   },
-  "author": "",
+  "author": "Nathan SEVA (Thykof)",
   "license": "ISC",
   "dependencies": {
     "@openzeppelin/contracts": "^3.2.0",
