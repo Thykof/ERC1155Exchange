@@ -4,14 +4,8 @@ const BigNumber = require('bignumber.js');
 const process = require('process');
 const Web3 = require('web3');
 
-const API_QUOTE_URL = 'https://api.0x.org/swap/v1/quote';
 const { MNEMONIC, RPC_URL } = process.env;
 
-const GAS_LIMIT = new BigNumber(6721975);
-
-function createQueryString(params) {
-    return Object.entries(params).map(([k, v]) => `${k}=${v}`).join('&');
-}
 
 // Wait for a web3 tx `send()` call to be mined and return the receipt.
 function waitForTxSuccess(tx) {
