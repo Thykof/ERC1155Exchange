@@ -24,8 +24,16 @@ https://programtheblockchain.com/posts/2018/03/23/storage-patterns-stacks-queues
 
 https://medium.com/coinmonks/ethereum-solidity-memory-vs-storage-which-to-use-in-local-functions-72b593c3703a
 
+## Features
+
+ - limit orders
+ - fees paid by taker and 1/3 fees bonus earn by maker
+ - deposit and withdraw fee credits (ether)
+ - withdraw bonus fee credits (ether)
+ - withdraw ether
+
 ## TODO
 
- - https://docs.soliditylang.org/en/v0.8.0/security-considerations.html#restrict-the-amount-of-ether
- - fix withdraw pattern, use OZ payment API
- - pause mode: disable withdrawals...
+ - restrict the amount of ether (https://docs.soliditylang.org/en/v0.8.0/security-considerations.html#restrict-the-amount-of-ether)
+ - withdraw pattern, use OZ payment API
+ - pause mode: disable trading and withdrawals
