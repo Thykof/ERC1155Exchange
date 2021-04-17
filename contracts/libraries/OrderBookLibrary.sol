@@ -91,10 +91,9 @@ library OrderBookLibrary {
     {
         if (self.buySide) {
             bestPrice = self.prices.last();
-            (timestamp, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
         } else {
             bestPrice = self.prices.first();
-            (timestamp, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
         }
+        (timestamp, amount, makerAccount) = self.pricesToOrderList[bestPrice].first();
     }
 }
