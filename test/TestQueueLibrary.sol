@@ -82,6 +82,9 @@ contract TestQueueLibrary {
             1,
             "Last should be 1"
         );
+
+        (bool r, ) = address(this).call(abi.encodePacked("dequeue()"));
+        Assert.isFalse(r, "Should revert, queue is empty");
     }
 
     function testExists2() public {
