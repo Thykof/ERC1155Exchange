@@ -65,6 +65,18 @@ const checkTradeExecuted = (
   assert.equal(event.args.value.toNumber(), amount) // checked in the find()
 }
 
+const checkOrder = (order, price, amount, timestamp, makerAccount) => {
+  if (order.price) {
+    assert.equal(order.price.toNumber(), price)
+  }
+  if (timestamp !== null) {
+    assert.equal(order.timestamp.toNumber(), timestamp)
+  }
+  assert.equal(order.amount.toNumber(), amount)
+  assert.equal(order.makerAccount, makerAccount)
+}
+
 module.exports.checkNullOrder = checkNullOrder
 module.exports.checkOrderAdded = checkOrderAdded
 module.exports.checkTradeExecuted = checkTradeExecuted
+module.exports.checkOrder = checkOrder

@@ -60,9 +60,9 @@ contract ERC1155ExchangeOrderBook {
         public
         view
         returns (
-            uint256,
-            uint256,
-            address
+            uint256 timestamp,
+            uint256 amount,
+            address makerAccount
         )
     {
         OrderListLibrary.OrderList storage orderList = asks

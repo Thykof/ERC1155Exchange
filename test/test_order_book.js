@@ -1,5 +1,8 @@
 const truffleAssert = require('truffle-assertions')
 
+const { checkOrder } = require('./utils')
+const { ZERO_ADDRESS } = require('./constants')
+
 const ERC1155Token = artifacts.require('ERC1155Token')
 const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForERC1155Exchange')
 const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplementationV1')
@@ -8,7 +11,7 @@ contract("ERC1155ExchangeOrderBook", accounts => {
 
   const [owner, shareholder] = accounts
   let tokenId = 1
-  const price = 700
+  let price = 700
   const amount = 2
   let tokens
   let exchange
@@ -96,9 +99,54 @@ contract("ERC1155ExchangeOrderBook", accounts => {
   })
 
   describe("Test getOrderAtPrice", async () => {
+    before(async () => {
+      result = undefined
+
+      sellPrice = 200
+      buyPrice = 150
+    })
+
     it("When no order", async () => {
-      assert.equal(await exchange.getOrderAtPrice(false, 1), 0)
-      assert.equal(await exchange.getOrderAtPrice(true, 1000000), 0)
+
+      // sell side
+      result = await exchange.getOrderAtPrice(false, sellPrice, 0)
+      checkOrder(result, 0, 0, 0, ZERO_ADDRESS)
+
+      // buy side
+      result = await exchange.getOrderAtPrice(true, buyPrice, 0)
+      checkOrder(result, 0, 0, 0, ZERO_ADDRESS)
+    })
+
+    it("When one order", async () => {
+      // sell side
+      await exchange.addOrder(false, sellPrice, amount, { from: owner })
+      result = await exchange.getOrderAtPrice(false, sellPrice, 0)
+      checkOrder(result, sellPrice, amount, null, owner)
+      result = await exchange.getOrderAtPrice(false, sellPrice, 1)
+      checkOrder(result, 0, 0, 0, ZERO_ADDRESS)
+
+      // buy side
+      await exchange.addOrder(true, buyPrice, amount, { from: owner, value: buyPrice*amount })
+      result = await exchange.getOrderAtPrice(true, buyPrice, 0)
+      checkOrder(result, buyPrice, amount, null, owner)
+      result = await exchange.getOrderAtPrice(true, buyPrice, 1)
+      checkOrder(result, 0, 0, 0, ZERO_ADDRESS)
+    })
+
+    it("When 2 orders", async () => {
+      // sell side
+      await exchange.addOrder(false, sellPrice, amount+1, { from: owner })
+      result = await exchange.getOrderAtPrice(false, sellPrice, 0)
+      checkOrder(result, sellPrice, amount, null, owner)
+      result = await exchange.getOrderAtPrice(false, sellPrice, 1)
+      checkOrder(result, sellPrice, amount+1, null, owner)
+
+      // buy side
+      await exchange.addOrder(true, buyPrice, amount+1, { from: owner, value: buyPrice*(amount+1) })
+      result = await exchange.getOrderAtPrice(true, buyPrice, 0)
+      checkOrder(result, buyPrice, amount, null, owner)
+      result = await exchange.getOrderAtPrice(true, buyPrice, 1)
+      checkOrder(result, buyPrice, amount+1, null, owner)
     })
   })
 })
