@@ -3,7 +3,7 @@ const truffleAssert = require('truffle-assertions')
 const { checkOrder } = require('./utils')
 const { ZERO_ADDRESS } = require('./constants')
 
-const ERC1155Token = artifacts.require('ERC1155Token')
+const TradableERC1155Token = artifacts.require('TradableERC1155Token')
 const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForERC1155Exchange')
 const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplementationV1')
 
@@ -19,7 +19,7 @@ contract("ERC1155ExchangeOrderBook", accounts => {
 
   before(async () => {
     implementation = await ERC1155ExchangeImplementationV1.new()
-    tokens = await ERC1155Token.new(implementation.address)
+    tokens = await TradableERC1155Token.new(implementation.address)
 
     const {logs} = await tokens.newToken(owner, tokenId, 300)
 

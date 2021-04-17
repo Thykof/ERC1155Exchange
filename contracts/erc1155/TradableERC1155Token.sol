@@ -8,7 +8,7 @@ import "./TradableERC1155Interface.sol";
 import "../exchange/ProxyAndStorageForERC1155Exchange.sol";
 
 
-contract ERC1155Token is ERC1155Pausable, ProxyAdmin {
+contract TradableERC1155Token is ERC1155Pausable, ProxyAdmin {
 
     event TokenCreated(
         address account,
@@ -44,12 +44,12 @@ contract ERC1155Token is ERC1155Pausable, ProxyAdmin {
     {
         require(
             msg.sender == owner(),
-            "ERC1155Token: Sender is not contract owner"
+            "TradableERC1155Token: Sender is not contract owner"
         );
-        require(tokenId != 0, "ERC1155Token: tokenId can't be zero");
+        require(tokenId != 0, "TradableERC1155Token: tokenId can't be zero");
         require(
             tokenIdToProxyExchange[tokenId] == address(0),
-            "ERC1155Token: token already created"
+            "TradableERC1155Token: token already created"
         );
 
         _mint(account, tokenId, amount, new bytes(0));
