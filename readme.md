@@ -28,5 +28,4 @@ https://medium.com/coinmonks/ethereum-solidity-memory-vs-storage-which-to-use-in
 
  - https://docs.soliditylang.org/en/v0.8.0/security-considerations.html#restrict-the-amount-of-ether
  - fix withdraw pattern, use OZ payment API
- - add and test external read order books methods for client use
  - pause mode: disable withdrawals...
