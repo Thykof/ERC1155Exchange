@@ -6,7 +6,7 @@ const TradableERC1155Token = artifacts.require('TradableERC1155Token')
 const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForERC1155Exchange')
 const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplementationV1')
 
-contract("ERC1155", accounts => {
+contract("ERC1155 Exchange (trade)", accounts => {
 
   const [owner, shareholder] = accounts
   let tokenId = 1
@@ -157,7 +157,6 @@ contract("ERC1155", accounts => {
       await exchange.addOrder(false, price, 7, { from: owner })
 
       let result = await exchange.addOrder(true, price, 9, { value: price * 9, from: shareholder })
-      // console.log(result.logs);
       checkOrderAdded(result, exchangeAddress, tokenId, price, 9, shareholder, true)
       checkTradeExecuted(result, exchangeAddress, tokenId, price, 3, shareholder, owner, shareholder)
       checkTradeExecuted(result, exchangeAddress, tokenId, price, 6, shareholder, owner, shareholder)

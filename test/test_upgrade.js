@@ -11,7 +11,7 @@ const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForE
 const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplementationV1')
 const MockERC1155ExchangeImplementationV2 = artifacts.require('MockERC1155ExchangeImplementationV2')
 
-contract("ERC1155", accounts => {
+contract("ERC1155 Upgradeable Proxy", accounts => {
 
   let tokenId = 1
   const [owner, shareholder] = accounts

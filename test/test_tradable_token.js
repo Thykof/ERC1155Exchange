@@ -10,7 +10,7 @@ const TradableERC1155Token = artifacts.require('TradableERC1155Token')
 const ProxyAndStorageForERC1155Exchange = artifacts.require('ProxyAndStorageForERC1155Exchange')
 const ERC1155ExchangeImplementationV1 = artifacts.require('ERC1155ExchangeImplementationV1')
 
-contract("ERC1155", accounts => {
+contract("ERC1155 Tradable Token", accounts => {
 
   const [owner, shareholder] = accounts
 

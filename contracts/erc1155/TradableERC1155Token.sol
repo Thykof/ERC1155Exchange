@@ -4,7 +4,6 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155Pausable.sol";
 import "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
 
-import "./TradableERC1155Interface.sol";
 import "../exchange/ProxyAndStorageForERC1155Exchange.sol";
 
 
