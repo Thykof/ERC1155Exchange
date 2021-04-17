@@ -68,5 +68,7 @@ contract ERC1155Token is ERC1155Pausable, ProxyAdmin {
         tokenIdList.push(tokenId);
 
         emit TokenCreated(account, tokenId, amount, address(exchange));
+
+        return exchange;
     }
 }
