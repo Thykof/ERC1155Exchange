@@ -9,25 +9,88 @@ const provider = new Web3.providers.HttpProvider(uri);
 const ADR1 = '0x376d75F6C0D9E693D1b3817241bfEd7e84a484Cc'
 const ADR2 = '0x9EC8D1e50645F9Fe257D04b9F93C30358F725905'
 
-async function test() {
-    const data = require("../build/contracts/ERC1155Token.json");
+const dataToken = require("../build/contracts/ERC1155Token.json");
+const dataProxy = require("../build/contracts/ProxyAndStorageForERC1155Exchange.json");
+const dataExchange = require("../build/contracts/ERC1155ExchangeImplementationV1.json");
 
+async function prepareContract() {
     console.log("gasLimit: " + (await web3.eth.getBlock('latest')).gasLimit);
 
-    var contract = truffleContract(data);
+    var contract = truffleContract(dataToken);
     contract.setProvider(provider);
 
+    const address = (await contract.deployed()).address
     const instance = new web3.eth.Contract(
-        data.abi,
-        (await contract.deployed()).address
+        dataToken.abi,
+        address
     );
+    instance.address = address
+    return instance
+}
+
+async function demoUsage() {
+    instance = await prepareContract()
 
     let r;
     r = await sendWithEstimateGas(instance.methods.setApprovalForAll(ADR2, true), ADR1);
-    console.log(`${r.gasUsed}`);
+    console.log(`gasUsed: ${r.gasUsed}`);
 
     r = await instance.methods.isApprovedForAll(ADR1, ADR2).call();
-    console.log(r);
+    console.log(`isApprovedForAll: ${r}`);
 }
 
-test()
+demoUsage()
+
+async function createExchange(tokenId, feeRate) {
+    erc1155 = await prepareContract()
+    const exchange = truffleContract(dataExchange);
+    exchange.setProvider(provider);
+    const exchangeAddress = (await exchange.deployed()).address
+
+    const proxyExchange = truffleContract(dataProxy);
+    proxyExchange.setProvider(provider);
+
+    abiInitialize = dataExchange.abi.find(elt => {
+        return elt.name === 'initialize'
+    })
+
+    // truffleContract instance
+    const proxyInstance = await proxyExchange.new(
+        exchangeAddress,
+        web3.eth.abi.encodeFunctionCall(
+            abiInitialize,
+            [
+                erc1155.address,
+                tokenId,
+                feeRate,
+                ADR2 // operator allowed to change fee fee rate
+            ]
+        ),
+        { from: ADR1 }
+    )
+
+    return [proxyInstance, exchangeAddress]
+}
+
+async function demoExchange(proxyInstance, exchangeAddress) {
+    const proxyAddress = proxyInstance.address
+
+    const exchangeImpl = truffleContract(dataExchange);
+    exchangeImpl.setProvider(provider);
+    const exchange = await exchangeImpl.at(proxyAddress)
+
+    await exchange.setFeeRate(6, { from: ADR2 })
+    const feeRate = await exchange.feeRate({ from: ADR2 })
+    console.log(feeRate.toNumber());
+}
+
+async function demo() {
+    let proxyInstance
+    let exchangeAddress
+    [proxyInstance, exchangeAddress] = await createExchange(13, 3)
+    await demoExchange(proxyInstance, exchangeAddress)
+    console.log('done');
+}
+
+
+demo()

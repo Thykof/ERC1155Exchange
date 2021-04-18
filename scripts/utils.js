@@ -59,7 +59,6 @@ module.exports = {
     etherToWei,
     weiToEther,
     createWeb3,
-    createQueryString,
     waitForTxSuccess,
     createProvider,
     sendWithEstimateGas
