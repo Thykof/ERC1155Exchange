@@ -6,12 +6,12 @@ const { sendWithEstimateGas } = require('./utils');
 const uri = "http://localhost:8545";
 const web3 = new Web3(uri);
 const provider = new Web3.providers.HttpProvider(uri);
-const ADR1 = '0x376d75F6C0D9E693D1b3817241bfEd7e84a484Cc'
-const ADR2 = '0x9EC8D1e50645F9Fe257D04b9F93C30358F725905'
+const ADR1 = '0x6E35e016c521f7370C1fF6A398ac228137dd16D9'
+const ADR2 = '0x6815C945E0F1525EA778a0bECCFc6e7ccc5BE91d'
 
-const dataToken = require("../build/contracts/ERC1155Token.json");
-const dataProxy = require("../build/contracts/ProxyAndStorageForERC1155Exchange.json");
-const dataExchange = require("../build/contracts/ERC1155ExchangeImplementationV1.json");
+const dataToken = require("../app/src/build/contracts/ERC1155Token.json");
+const dataProxy = require("../app/src/build/contracts/ProxyAndStorageForERC1155Exchange.json");
+const dataExchange = require("../app/src/build/contracts/ERC1155ExchangeImplementationV1.json");
 
 async function prepareContract() {
     console.log("gasLimit: " + (await web3.eth.getBlock('latest')).gasLimit);
