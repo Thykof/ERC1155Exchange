@@ -1,3 +1,4 @@
+app/src/build/contracts
 build/*
 artifacts/*
 cache
