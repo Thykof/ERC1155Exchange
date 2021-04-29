@@ -34,6 +34,7 @@ https://medium.com/coinmonks/ethereum-solidity-memory-vs-storage-which-to-use-in
 
 ## TODO
 
- - restrict the amount of ether (https://docs.soliditylang.org/en/v0.8.0/security-considerations.html#restrict-the-amount-of-ether)
- - withdraw pattern, use OZ payment API
- - pause mode: disable trading and withdrawals
+- (abandoned) restrict the amount of ether (https://docs.soliditylang.org/en/v0.8.0/security-considerations.html#restrict-the-amount-of-ether)
+- (abandoned) withdraw pattern, use OZ payment API
+- (abandoned) pause mode: disable trading and withdrawals
+- (abandoned) cancel order
