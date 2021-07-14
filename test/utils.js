@@ -1,15 +1,16 @@
-const truffleAssert = require('truffle-assertions')
+const truffleAssert = require("truffle-assertions");
 
-const { ZERO_ADDRESS } = require('./constants')
+const { ZERO_ADDRESS } = require("./constants");
 
 const checkNullOrder = result => {
-  assert.equal(result.timestamp.toNumber(), 0)
-  assert.equal(result.bestPrice.toNumber(), 0)
-  assert.equal(result.amount.toNumber(), 0)
-  assert.equal(result.makerAccount, ZERO_ADDRESS)
-}
+  assert.equal(result.timestamp.toNumber(), 0);
+  assert.equal(result.bestPrice.toNumber(), 0);
+  assert.equal(result.amount.toNumber(), 0);
+  assert.equal(result.makerAccount, ZERO_ADDRESS);
+};
 
-const checkOrderAdded = (result,
+const checkOrderAdded = (
+  result,
   exchangeAddress,
   tokenId,
   price,
@@ -17,13 +18,13 @@ const checkOrderAdded = (result,
   maker,
   buySide
 ) => {
-  let event = result.logs.find(l => l.event === 'OrderAdded')
-  assert.equal(event.args.tokenId.toNumber(), tokenId)
-  assert.equal(event.args.buySide, buySide)
-  assert.equal(event.args.price.toNumber(), price)
-  assert.equal(event.args.amount.toNumber(), amount)
-  assert.equal(event.args.makerAccount, maker)
-}
+  let event = result.logs.find(l => l.event === "OrderAdded");
+  assert.equal(event.args.tokenId.toNumber(), tokenId);
+  assert.equal(event.args.buySide, buySide);
+  assert.equal(event.args.price.toNumber(), price);
+  assert.equal(event.args.amount.toNumber(), amount);
+  assert.equal(event.args.makerAccount, maker);
+};
 
 const checkTradeExecuted = (
   result,
@@ -36,47 +37,46 @@ const checkTradeExecuted = (
   taker
 ) => {
   let event = result.logs.find(l => {
-    if (l.event === 'TradeExecuted') {
-      return l.args.amount.toNumber() === amount
+    if (l.event === "TradeExecuted") {
+      return l.args.amount.toNumber() === amount;
     }
-    return false
-  })
-  assert.notEqual(event, undefined, "Event TradeExecuted not emited")
-  assert.equal(event.args.tokenId.toNumber(), tokenId)
-  assert.equal(event.args.price.toNumber(), price)
-  assert.equal(event.args.amount.toNumber(), amount) // checked in the find()
-  assert.equal(event.args.buyer, buyer)
-  assert.equal(event.args.seller, seller)
-  assert.equal(event.args.taker, taker)
-  assert.equal(event.args.paidFees.toNumber(), price * amount * 0.03)
-
+    return false;
+  });
+  assert.notEqual(event, undefined, "Event TradeExecuted not emited");
+  assert.equal(event.args.tokenId.toNumber(), tokenId);
+  assert.equal(event.args.price.toNumber(), price);
+  assert.equal(event.args.amount.toNumber(), amount); // checked in the find()
+  assert.equal(event.args.buyer, buyer);
+  assert.equal(event.args.seller, seller);
+  assert.equal(event.args.taker, taker);
+  assert.equal(event.args.paidFees.toNumber(), price * amount * 0.03);
 
   event = result.logs.find(l => {
-    if (l.event === 'TransferSingle') {
-      return l.args.value.toNumber() === amount
+    if (l.event === "TransferSingle") {
+      return l.args.value.toNumber() === amount;
     }
-    return false
-  })
-  assert.notEqual(event, undefined, "Event TradeExecuted not emited")
-  assert.equal(event.args.operator, exchangeAddress)
-  assert.equal(event.args.from, seller)
-  assert.equal(event.args.to, buyer)
-  assert.equal(event.args.id.toNumber(), tokenId)
-  assert.equal(event.args.value.toNumber(), amount) // checked in the find()
-}
+    return false;
+  });
+  assert.notEqual(event, undefined, "Event TradeExecuted not emited");
+  assert.equal(event.args.operator, exchangeAddress);
+  assert.equal(event.args.from, seller);
+  assert.equal(event.args.to, buyer);
+  assert.equal(event.args.id.toNumber(), tokenId);
+  assert.equal(event.args.value.toNumber(), amount); // checked in the find()
+};
 
 const checkOrder = (order, price, amount, timestamp, makerAccount) => {
   if (order.price) {
-    assert.equal(order.price.toNumber(), price)
+    assert.equal(order.price.toNumber(), price);
   }
   if (timestamp !== null) {
-    assert.equal(order.timestamp.toNumber(), timestamp)
+    assert.equal(order.timestamp.toNumber(), timestamp);
   }
-  assert.equal(order.amount.toNumber(), amount)
-  assert.equal(order.makerAccount, makerAccount)
-}
+  assert.equal(order.amount.toNumber(), amount);
+  assert.equal(order.makerAccount, makerAccount);
+};
 
-module.exports.checkNullOrder = checkNullOrder
-module.exports.checkOrderAdded = checkOrderAdded
-module.exports.checkTradeExecuted = checkTradeExecuted
-module.exports.checkOrder = checkOrder
+module.exports.checkNullOrder = checkNullOrder;
+module.exports.checkOrderAdded = checkOrderAdded;
+module.exports.checkTradeExecuted = checkTradeExecuted;
+module.exports.checkOrder = checkOrder;
